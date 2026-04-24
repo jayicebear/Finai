@@ -1,0 +1,47 @@
+.wrapper {
+  padding: 28px 24px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 28px;
+}
+
+.ticker {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1a2e;
+  font-family: system-ui, sans-serif;
+}
+
+.name {
+  font-size: 13px;
+  color: #999;
+  font-family: system-ui, sans-serif;
+  margin-top: 2px;
+}
+
+.priceBlock {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.price {
+  font-size: 26px;
+  font-weight: 700;
+  color: #1a1a2e;
+  font-family: system-ui, sans-serif;
+}
+
+.change {
+  font-size: 14px;
+  font-family: system-ui, sans-serif;
+  font-weight: 500;
+}
+
+.up { color: #16a34a; }
+.down { color: #dc2626; }

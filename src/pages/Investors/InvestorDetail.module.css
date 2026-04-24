@@ -1,0 +1,238 @@
+.panel {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 16px;
+  padding: 24px;
+  position: relative;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+}
+
+.close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: #f5f2ed;
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 12px;
+  cursor: pointer;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.close:hover { background: #eee; }
+
+.profile {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #e6e1d9;
+  color: #1a1a2e;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: system-ui, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a2e;
+  font-family: system-ui, sans-serif;
+  margin-bottom: 6px;
+}
+
+.badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.styleBadge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 10px;
+  font-family: system-ui, sans-serif;
+}
+
+.strategyBadge {
+  font-size: 11px;
+  color: #888;
+  background: #f5f2ed;
+  padding: 3px 10px;
+  border-radius: 10px;
+  font-family: system-ui, sans-serif;
+}
+
+.bio {
+  font-size: 12px;
+  color: #777;
+  font-family: system-ui, sans-serif;
+  line-height: 1.6;
+}
+
+.divider { height: 1px; background: #f0ede8; margin: 16px 0; }
+
+.metricsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.metric {
+  background: #faf8f5;
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.metricLbl {
+  font-size: 10px;
+  color: #bbb;
+  font-family: system-ui, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.metricVal {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a2e;
+  font-family: system-ui, sans-serif;
+}
+
+.infoBox {
+  background: #faf8f5;
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: system-ui, sans-serif;
+  font-size: 13px;
+}
+
+.infoLbl { color: #aaa; }
+.infoVal  { font-weight: 600; color: #1a1a2e; }
+
+.charts {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chartBlock { display: flex; flex-direction: column; gap: 4px; }
+
+.chartTitle {
+  font-size: 11px;
+  color: #aaa;
+  font-family: system-ui, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-weight: 600;
+}
+
+.sectionTitle {
+  font-size: 11px;
+  color: #aaa;
+  font-family: system-ui, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.holdingList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.holdingItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: system-ui, sans-serif;
+}
+
+.holdingDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.holdingId {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1a2e;
+  width: 44px;
+  flex-shrink: 0;
+}
+
+.holdingName {
+  font-size: 11px;
+  color: #aaa;
+  flex: 1;
+}
+
+.holdingBar {
+  width: 80px;
+  height: 4px;
+  background: #eee;
+  border-radius: 2px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.holdingFill {
+  height: 100%;
+  border-radius: 2px;
+}
+
+.holdingWeight {
+  font-size: 11px;
+  font-weight: 600;
+  color: #555;
+  width: 28px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.holdingReturn {
+  font-size: 11px;
+  font-weight: 700;
+  width: 48px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.up   { color: #16a34a; }
+.down { color: #dc2626; }

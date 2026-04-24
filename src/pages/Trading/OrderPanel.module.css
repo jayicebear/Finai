@@ -1,0 +1,211 @@
+.panel {
+  width: 260px;
+  min-width: 260px;
+  border-left: 1px solid #ddd;
+  background-color: #f8f6f2;
+  height: calc(100vh - 60px);
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+}
+
+.balance {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #ddd;
+}
+
+.balanceLabel {
+  font-size: 11px;
+  color: #999;
+  font-family: system-ui, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.balanceValue {
+  font-size: 22px;
+  font-weight: 700;
+  font-family: system-ui, sans-serif;
+  color: #1a1a2e;
+}
+
+.tabs {
+  display: flex;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #ddd;
+}
+
+.tab {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: #fff;
+  font-size: 14px;
+  font-family: system-ui, sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  color: #999;
+  transition: all 0.15s;
+}
+
+.buyActive {
+  background-color: #16a34a;
+  color: #fff;
+}
+
+.sellActive {
+  background-color: #dc2626;
+  color: #fff;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 11px;
+  color: #999;
+  font-family: system-ui, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.stockName {
+  font-size: 14px;
+  font-family: system-ui, sans-serif;
+  font-weight: 600;
+  color: #1a1a2e;
+  background: #fff;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.qtyRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.qtyBtn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 8px;
+  font-size: 18px;
+  cursor: pointer;
+  font-family: system-ui, sans-serif;
+  color: #1a1a2e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qtyBtn:hover {
+  background: #ece9e4;
+}
+
+.qtyInput {
+  flex: 1;
+  height: 36px;
+  text-align: center;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 15px;
+  font-family: system-ui, sans-serif;
+  font-weight: 600;
+  background: #fff;
+  color: #1a1a2e;
+  outline: none;
+}
+
+.summary {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  font-family: system-ui, sans-serif;
+  color: #555;
+}
+
+.summaryRow span:last-child {
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.submit {
+  width: 100%;
+  padding: 13px;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+  color: #fff;
+  transition: opacity 0.15s;
+}
+
+.submit:hover {
+  opacity: 0.85;
+}
+
+.submitBuy { background-color: #16a34a; }
+.submitSell { background-color: #dc2626; }
+
+.holding {
+  border-top: 1px solid #ddd;
+  padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.holdingTitle {
+  font-size: 11px;
+  color: #999;
+  font-family: system-ui, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+.holdingRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  font-family: system-ui, sans-serif;
+  color: #555;
+}
+
+.holdingRow span:last-child {
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.up { color: #16a34a !important; }
+.down { color: #dc2626 !important; }

@@ -1,0 +1,212 @@
+.page {
+  min-height: calc(100vh - 60px);
+  background: #faf8f5;
+  padding: 40px 48px;
+}
+
+.header {
+  margin-bottom: 32px;
+}
+
+.title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1a1a2e;
+  font-family: system-ui, sans-serif;
+  margin-bottom: 20px;
+}
+
+.summaryRow {
+  display: flex;
+  gap: 12px;
+}
+
+.summaryCard {
+  flex: 1;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cardLabel {
+  font-size: 11px;
+  color: #aaa;
+  font-family: system-ui, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.cardValue {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a2e;
+  font-family: system-ui, sans-serif;
+}
+
+/* 필터 */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 16px 20px;
+}
+
+.filterGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filterLabel {
+  font-size: 12px;
+  color: #aaa;
+  font-family: system-ui, sans-serif;
+  margin-right: 4px;
+  white-space: nowrap;
+}
+
+.filterBtn {
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid #ddd;
+  background: #fff;
+  font-size: 12px;
+  font-family: system-ui, sans-serif;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.filterBtn:hover {
+  border-color: #1a1a2e;
+  color: #1a1a2e;
+}
+
+.filterActive {
+  background: #1a1a2e;
+  color: #f0ede8;
+  border-color: #1a1a2e;
+}
+
+/* 테이블 */
+.tableWrap {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: system-ui, sans-serif;
+  font-size: 13px;
+}
+
+.table th {
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 11px;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  border-bottom: 1px solid #eee;
+  font-weight: 600;
+  background: #faf8f5;
+}
+
+.table td {
+  padding: 13px 16px;
+  border-bottom: 1px solid #f4f2ef;
+  vertical-align: middle;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.table tbody tr:hover td {
+  background: #faf8f5;
+}
+
+.timeCell {
+  color: #aaa;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.sourceCell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sourceBadge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 10px;
+}
+
+.modelBadge {
+  font-size: 11px;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+}
+
+.stockCell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stockId {
+  font-weight: 700;
+  color: #1a1a2e;
+  font-size: 14px;
+}
+
+.stockName {
+  font-size: 11px;
+  color: #bbb;
+}
+
+.typeBadge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 10px;
+}
+
+.buy  { color: #16a34a; background: #f0fdf4; }
+.sell { color: #dc2626; background: #fef2f2; }
+
+.numCell {
+  font-family: system-ui, sans-serif;
+  font-size: 13px;
+  color: #444;
+  text-align: right;
+}
+
+.buyAmt  { color: #dc2626; font-weight: 600; }
+.sellAmt { color: #16a34a; font-weight: 600; }
+
+.empty {
+  text-align: center;
+  padding: 64px 0;
+  color: #bbb;
+  font-family: system-ui, sans-serif;
+  font-size: 14px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+}

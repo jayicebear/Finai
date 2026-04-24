@@ -1,0 +1,11 @@
+.page {
+  display: flex;
+  height: calc(100vh - 60px);
+  overflow: hidden;
+}
+
+.center {
+  flex: 1;
+  overflow-y: auto;
+  background-color: #faf8f5;
+}

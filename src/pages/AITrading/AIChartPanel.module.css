@@ -1,0 +1,340 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 60px);
+  overflow-y: auto;
+  background: #faf8f5;
+}
+
+/* 종목 탭 */
+.stockBar {
+  display: flex;
+  gap: 2px;
+  padding: 10px 20px;
+  border-bottom: 1px solid #e8e4de;
+  background: #f5f2ed;
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+
+.stockBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.stockBtn:hover { background: #ece9e4; }
+
+.stockActive {
+  background: #fff;
+  border-color: #ddd;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.stockTicker {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1a2e;
+  font-family: system-ui, sans-serif;
+}
+
+.stockPct {
+  font-size: 10px;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+}
+
+/* 종목 정보 */
+.infoRow {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 24px 8px;
+  flex-shrink: 0;
+}
+
+.ticker {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a2e;
+  font-family: system-ui, sans-serif;
+  margin-right: 8px;
+}
+
+.name {
+  font-size: 12px;
+  color: #bbb;
+  font-family: system-ui, sans-serif;
+}
+
+.priceGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.price {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a2e;
+  font-family: system-ui, sans-serif;
+}
+
+.change {
+  font-size: 12px;
+  font-family: system-ui, sans-serif;
+  font-weight: 500;
+}
+
+/* AI 상태 */
+.aiStatus {
+  display: flex;
+  align-items: center;
+}
+
+.thinking {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.thinkDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #d97706;
+  animation: blink 1.2s infinite;
+}
+
+.thinkDot:nth-child(2) { animation-delay: 0.2s; }
+.thinkDot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes blink {
+  0%, 100% { opacity: 0.2; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+.thinkLabel {
+  font-size: 12px;
+  color: #d97706;
+  font-family: system-ui, sans-serif;
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+.liveStatus {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: #888;
+  font-family: system-ui, sans-serif;
+}
+
+.liveDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #16a34a;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.autoBadge {
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 8px;
+}
+
+.offLabel {
+  font-size: 12px;
+  color: #ccc;
+  font-family: system-ui, sans-serif;
+}
+
+/* 체결 배너 */
+.banner {
+  margin: 0 20px 4px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border-left: 4px solid;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: slideIn 0.3s ease;
+  flex-shrink: 0;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.bannerBuy  { background: #f0fdf4; border-color: #16a34a; }
+.bannerSell { background: #fef2f2; border-color: #dc2626; }
+
+.bannerModel {
+  font-size: 11px;
+  font-weight: 700;
+  font-family: system-ui, sans-serif;
+  flex-shrink: 0;
+}
+
+.bannerText {
+  font-size: 13px;
+  font-family: system-ui, sans-serif;
+  color: #333;
+  flex-shrink: 0;
+}
+
+.bannerReason {
+  font-size: 11px;
+  color: #888;
+  font-family: system-ui, sans-serif;
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* 차트 */
+.chartWrap {
+  padding: 0 8px;
+  flex-shrink: 0;
+}
+
+/* 체결 내역 */
+.logSection {
+  flex: 1;
+  padding: 8px 24px 24px;
+  border-top: 1px solid #eee;
+  overflow-y: auto;
+}
+
+.logTitle {
+  font-size: 11px;
+  font-weight: 600;
+  color: #aaa;
+  font-family: system-ui, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 12px;
+}
+
+.logCount {
+  background: #e6e1d9;
+  color: #666;
+  font-size: 10px;
+  padding: 1px 7px;
+  border-radius: 10px;
+}
+
+.logEmpty {
+  font-size: 13px;
+  color: #ccc;
+  font-family: system-ui, sans-serif;
+  padding: 12px 0;
+}
+
+.logList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.logItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 8px 12px;
+  animation: fadeIn 0.25s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(-4px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.logType {
+  font-size: 11px;
+  font-weight: 700;
+  font-family: system-ui, sans-serif;
+  padding: 2px 8px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.logBuy  { color: #16a34a; background: #f0fdf4; }
+.logSell { color: #dc2626; background: #fef2f2; }
+
+.logStock {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1a2e;
+  font-family: system-ui, sans-serif;
+  width: 48px;
+  flex-shrink: 0;
+}
+
+.logDetail {
+  font-size: 12px;
+  color: #888;
+  font-family: system-ui, sans-serif;
+  width: 120px;
+  flex-shrink: 0;
+}
+
+.logReason {
+  font-size: 11px;
+  color: #aaa;
+  font-family: system-ui, sans-serif;
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.logPnl {
+  font-size: 12px;
+  font-weight: 700;
+  font-family: system-ui, sans-serif;
+  flex-shrink: 0;
+  width: 70px;
+  text-align: right;
+}
+
+.logTime {
+  font-size: 10px;
+  color: #ccc;
+  font-family: system-ui, sans-serif;
+  flex-shrink: 0;
+  width: 60px;
+  text-align: right;
+}
+
+.up   { color: #16a34a; }
+.down { color: #dc2626; }

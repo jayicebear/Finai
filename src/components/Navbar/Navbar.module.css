@@ -1,0 +1,67 @@
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  height: 60px;
+  background-color: #f0ede8;
+  border-bottom: 1px solid #ddd;
+}
+
+.logo {
+  font-size: 18px;
+  font-weight: bold;
+  letter-spacing: -0.5px;
+  cursor: pointer;
+  text-decoration: none;
+  color: #1a1a2e;
+}
+
+.menu {
+  display: flex;
+  list-style: none;
+  gap: 32px;
+  font-size: 14px;
+}
+
+.menu a {
+  text-decoration: none;
+  color: #1a1a2e;
+}
+
+.menu a:hover {
+  opacity: 0.5;
+}
+
+.auth {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.login {
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.login:hover {
+  opacity: 0.6;
+}
+
+.signup {
+  background-color: #1a1a2e;
+  color: #f0ede8;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.signup:hover {
+  opacity: 0.8;
+}
