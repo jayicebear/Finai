@@ -6,6 +6,27 @@
   background: #faf8f5;
 }
 
+@media (max-width: 768px) {
+  .wrapper {
+    height: auto;
+    overflow-y: visible;
+  }
+
+  .logItem {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .logDetail,
+  .logReason {
+    width: auto;
+  }
+
+  .logTime {
+    width: auto;
+  }
+}
+
 /* 종목 탭 */
 .stockBar {
   display: flex;

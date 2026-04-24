@@ -12,7 +12,7 @@ import Investors from './pages/Investors/Investors'
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/Finai">
       <PortfolioProvider>
         <Navbar />
         <Routes>

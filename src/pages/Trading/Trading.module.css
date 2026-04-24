@@ -9,3 +9,15 @@
   overflow-y: auto;
   background-color: #faf8f5;
 }
+
+@media (max-width: 768px) {
+  .page {
+    flex-direction: column;
+    height: auto;
+    overflow: visible;
+  }
+
+  .center {
+    overflow-y: visible;
+  }
+}

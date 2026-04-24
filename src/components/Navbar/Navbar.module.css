@@ -6,6 +6,8 @@
   height: 60px;
   background-color: #f0ede8;
   border-bottom: 1px solid #ddd;
+  position: relative;
+  z-index: 100;
 }
 
 .logo {
@@ -64,4 +66,106 @@
 
 .signup:hover {
   opacity: 0.8;
+}
+
+/* Hamburger — hidden on desktop */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  z-index: 110;
+}
+
+.bar {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: #1a1a2e;
+  border-radius: 2px;
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+/* X animation */
+.barTop {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: #1a1a2e;
+  border-radius: 2px;
+  transform: translateY(7px) rotate(45deg);
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+.barMid {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: #1a1a2e;
+  border-radius: 2px;
+  opacity: 0;
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+.barBot {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: #1a1a2e;
+  border-radius: 2px;
+  transform: translateY(-7px) rotate(-45deg);
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    padding: 0 20px;
+    flex-wrap: wrap;
+    height: auto;
+    min-height: 60px;
+  }
+
+  .hamburger {
+    display: flex;
+  }
+
+  .menu {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    gap: 0;
+    font-size: 15px;
+    background: #f0ede8;
+    border-top: 1px solid #ddd;
+    padding: 8px 0;
+  }
+
+  .menuOpen {
+    display: flex;
+  }
+
+  .menu li {
+    border-bottom: 1px solid #e5e2dd;
+  }
+
+  .menu a {
+    display: block;
+    padding: 12px 20px;
+  }
+
+  .auth {
+    display: none;
+    width: 100%;
+    padding: 12px 20px 16px;
+    background: #f0ede8;
+    border-top: 1px solid #ddd;
+  }
+
+  .authOpen {
+    display: flex;
+  }
 }

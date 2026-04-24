@@ -166,3 +166,18 @@
   color: #555;
   font-family: system-ui, sans-serif;
 }
+
+@media (max-width: 768px) {
+  .card {
+    grid-template-columns: 28px 1fr auto;
+    gap: 0 12px;
+  }
+
+  .stats {
+    display: none;
+  }
+
+  .returns {
+    grid-column: 3;
+  }
+}

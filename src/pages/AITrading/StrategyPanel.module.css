@@ -11,6 +11,17 @@
   gap: 22px;
 }
 
+@media (max-width: 768px) {
+  .panel {
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid #ddd;
+    overflow-y: visible;
+  }
+}
+
 .section {
   display: flex;
   flex-direction: column;

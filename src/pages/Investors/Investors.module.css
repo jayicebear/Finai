@@ -98,3 +98,29 @@
   position: sticky;
   top: 20px;
 }
+
+@media (max-width: 768px) {
+  .page {
+    padding: 24px 16px;
+  }
+
+  .title {
+    font-size: 24px;
+  }
+
+  .toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .body {
+    flex-direction: column;
+  }
+
+  .detail {
+    width: 100%;
+    min-width: 0;
+    position: static;
+  }
+}

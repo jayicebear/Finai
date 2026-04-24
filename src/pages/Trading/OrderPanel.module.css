@@ -11,6 +11,16 @@
   overflow-y: auto;
 }
 
+@media (max-width: 768px) {
+  .panel {
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    border-left: none;
+    border-top: 1px solid #ddd;
+  }
+}
+
 .balance {
   display: flex;
   flex-direction: column;

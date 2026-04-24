@@ -61,3 +61,13 @@
   font-family: system-ui, sans-serif;
   font-size: 14px;
 }
+
+@media (max-width: 768px) {
+  .page {
+    padding: 24px 16px;
+  }
+
+  .title {
+    font-size: 22px;
+  }
+}

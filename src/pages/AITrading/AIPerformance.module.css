@@ -11,6 +11,21 @@
   gap: 16px;
 }
 
+@media (max-width: 768px) {
+  .panel {
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    border-left: none;
+    border-top: 1px solid #ddd;
+    overflow-y: visible;
+  }
+
+  .statGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
 .modelCard {
   border: 2px solid;
   border-radius: 12px;

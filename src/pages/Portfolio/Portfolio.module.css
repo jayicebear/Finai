@@ -178,3 +178,35 @@
 
 .up { color: #16a34a; font-weight: 600; }
 .down { color: #dc2626; font-weight: 600; }
+
+@media (max-width: 768px) {
+  .page {
+    padding: 24px 16px;
+  }
+
+  .title {
+    font-size: 24px;
+  }
+
+  .summary {
+    flex-wrap: wrap;
+  }
+
+  .summaryCard {
+    min-width: calc(50% - 8px);
+  }
+
+  .body {
+    flex-direction: column;
+  }
+
+  .chartSection {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .table th,
+  .table td {
+    padding: 10px 8px;
+  }
+}
