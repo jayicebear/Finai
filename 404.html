@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <script>
+      var path = window.location.pathname.replace('/Finai', '');
+      sessionStorage.redirect = path || '/';
+      window.location.replace('/Finai/');
+    </script>
+  </head>
+  <body></body>
+</html>
