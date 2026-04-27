@@ -1,4 +1,4 @@
-# Fintrend
+# Apexis
 
 <img width="2328" height="1276" alt="image" src="https://github.com/user-attachments/assets/12a7e3d1-f991-4de3-974e-fbc4d0547011" />
 
