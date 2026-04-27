@@ -8,6 +8,136 @@
   flex: 1;
   overflow-y: auto;
   background-color: #faf8f5;
+  min-width: 0;
+}
+
+.orderCol {
+  width: 260px;
+  min-width: 260px;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #ddd;
+  height: calc(100vh - 60px);
+  overflow: hidden;
+}
+
+.historySection {
+  padding: 0 0 24px;
+  border-top: 1px solid #e8e4de;
+  margin-top: 4px;
+}
+
+.historyHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px 8px;
+}
+
+.historyTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1a2e;
+  font-family: system-ui, sans-serif;
+}
+
+.historyCount {
+  font-size: 11px;
+  color: #aaa;
+  font-family: system-ui, sans-serif;
+}
+
+.historyEmpty {
+  padding: 16px;
+  font-size: 12px;
+  color: #bbb;
+  font-family: system-ui, sans-serif;
+  margin: 0;
+}
+
+.historyTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-family: system-ui, sans-serif;
+}
+
+.historyTable thead th {
+  padding: 6px 12px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 600;
+  color: #bbb;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  border-bottom: 1px solid #eee;
+  white-space: nowrap;
+}
+
+.historyTable tbody tr {
+  border-bottom: 1px solid #f2efe9;
+  transition: background 0.1s;
+}
+
+.historyTable tbody tr:hover {
+  background: #f5f2ec;
+}
+
+.historyTable tbody td {
+  padding: 7px 12px;
+  color: #333;
+  vertical-align: middle;
+}
+
+.typeBadge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.buy {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.sell {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.stockCell {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.stockId {
+  font-weight: 700;
+  color: #1a1a2e;
+  font-size: 12px;
+}
+
+.stockName {
+  font-size: 10px;
+  color: #aaa;
+}
+
+.totalCell {
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.sourceCell {
+  color: #888;
+  font-size: 11px;
+}
+
+.timeCell {
+  color: #bbb;
+  font-size: 11px;
+  white-space: nowrap;
 }
 
 @media (max-width: 768px) {
@@ -19,5 +149,14 @@
 
   .center {
     overflow-y: visible;
+  }
+
+  .orderCol {
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    border-left: none;
+    border-top: 1px solid #ddd;
+    overflow: visible;
   }
 }

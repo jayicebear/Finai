@@ -1,142 +1,97 @@
 .panel {
-  width: 260px;
-  min-width: 260px;
-  border-left: 1px solid #ddd;
   background-color: #f8f6f2;
-  height: calc(100vh - 60px);
-  padding: 20px 16px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  overflow-y: auto;
+  gap: 12px;
+  flex: 2;
+  min-height: 0;
+  border-top: 1px solid #ddd;
+  overflow: hidden;
 }
 
-@media (max-width: 768px) {
-  .panel {
-    width: 100%;
-    min-width: 0;
-    height: auto;
-    border-left: none;
-    border-top: 1px solid #ddd;
-  }
+/* 상단 종목 + 잔액 */
+.topRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e5e2dd;
 }
 
-.balance {
+.stockInfo {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #ddd;
+  gap: 2px;
+}
+
+.stockId {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1a2e;
+  font-family: system-ui, sans-serif;
+}
+
+.stockPrice {
+  font-size: 12px;
+  color: #999;
+  font-family: system-ui, sans-serif;
+}
+
+.balanceInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
 }
 
 .balanceLabel {
-  font-size: 11px;
-  color: #999;
+  font-size: 10px;
+  color: #bbb;
   font-family: system-ui, sans-serif;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.8px;
 }
 
 .balanceValue {
-  font-size: 22px;
+  font-size: 14px;
   font-weight: 700;
-  font-family: system-ui, sans-serif;
   color: #1a1a2e;
-}
-
-.tabs {
-  display: flex;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid #ddd;
-}
-
-.tab {
-  flex: 1;
-  padding: 10px;
-  border: none;
-  background: #fff;
-  font-size: 14px;
   font-family: system-ui, sans-serif;
-  font-weight: 600;
-  cursor: pointer;
-  color: #999;
-  transition: all 0.15s;
 }
 
-.buyActive {
-  background-color: #16a34a;
-  color: #fff;
-}
-
-.sellActive {
-  background-color: #dc2626;
-  color: #fff;
-}
-
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.label {
-  font-size: 11px;
-  color: #999;
-  font-family: system-ui, sans-serif;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.stockName {
-  font-size: 14px;
-  font-family: system-ui, sans-serif;
-  font-weight: 600;
-  color: #1a1a2e;
-  background: #fff;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid #ddd;
-}
-
+/* 수량 */
 .qtyRow {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .qtyBtn {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border: 1px solid #ddd;
   background: #fff;
   border-radius: 8px;
-  font-size: 18px;
+  font-size: 16px;
   cursor: pointer;
   font-family: system-ui, sans-serif;
   color: #1a1a2e;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
-.qtyBtn:hover {
-  background: #ece9e4;
-}
+.qtyBtn:hover { background: #ece9e4; }
 
 .qtyInput {
   flex: 1;
-  height: 36px;
+  height: 32px;
   text-align: center;
   border: 1px solid #ddd;
   border-radius: 8px;
-  font-size: 15px;
+  font-size: 14px;
   font-family: system-ui, sans-serif;
   font-weight: 600;
   background: #fff;
@@ -144,35 +99,43 @@
   outline: none;
 }
 
-.summary {
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 12px;
+/* 총액 */
+.totalRow {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.totalLabel {
+  font-size: 12px;
+  color: #aaa;
+  font-family: system-ui, sans-serif;
+}
+
+.totalValue {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a1a2e;
+  font-family: system-ui, sans-serif;
+}
+
+/* 버튼 */
+.btnRow {
+  display: flex;
   gap: 8px;
 }
 
-.summaryRow {
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  font-family: system-ui, sans-serif;
-  color: #555;
-}
-
-.summaryRow span:last-child {
-  font-weight: 600;
-  color: #1a1a2e;
-}
-
-.submit {
-  width: 100%;
-  padding: 13px;
+.buyBtn,
+.sellBtn {
+  flex: 1;
+  padding: 12px;
   border: none;
   border-radius: 10px;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   font-family: system-ui, sans-serif;
   cursor: pointer;
@@ -180,42 +143,32 @@
   transition: opacity 0.15s;
 }
 
-.submit:hover {
-  opacity: 0.85;
-}
+.buyBtn  { background: #16a34a; }
+.sellBtn { background: #dc2626; }
+.buyBtn:hover, .sellBtn:hover { opacity: 0.85; }
 
-.submitBuy { background-color: #16a34a; }
-.submitSell { background-color: #dc2626; }
-
+/* 보유 현황 */
 .holding {
-  border-top: 1px solid #ddd;
-  padding-top: 16px;
+  border-top: 1px solid #e5e2dd;
+  padding-top: 10px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-}
-
-.holdingTitle {
-  font-size: 11px;
-  color: #999;
-  font-family: system-ui, sans-serif;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  font-weight: 600;
+  gap: 7px;
 }
 
 .holdingRow {
   display: flex;
   justify-content: space-between;
-  font-size: 13px;
+  font-size: 12px;
   font-family: system-ui, sans-serif;
   color: #555;
 }
 
-.holdingRow span:last-child {
-  font-weight: 600;
-  color: #1a1a2e;
-}
+.holdingRow span:last-child { font-weight: 600; color: #1a1a2e; }
 
-.up { color: #16a34a !important; }
+.up   { color: #16a34a !important; }
 .down { color: #dc2626 !important; }
+
+@media (max-width: 768px) {
+  .panel { flex: none; }
+}
