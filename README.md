@@ -1,6 +1,7 @@
 # Apexis
 
-<img width="2328" height="1276" alt="image" src="https://github.com/user-attachments/assets/12a7e3d1-f991-4de3-974e-fbc4d0547011" />
+<img width="2336" height="1278" alt="image" src="https://github.com/user-attachments/assets/c94f5628-18f6-4403-a01e-950819cd3c27" />
+
 
 # React + Vite
 
