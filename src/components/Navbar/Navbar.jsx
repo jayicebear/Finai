@@ -7,7 +7,7 @@ function Navbar() {
 
   return (
     <nav className={styles.navbar}>
-      <Link to="/" className={styles.logo} onClick={() => setOpen(false)}>FinTrend</Link>
+      <Link to="/" className={styles.logo} onClick={() => setOpen(false)}>Apexis</Link>
 
       <button className={styles.hamburger} onClick={() => setOpen(o => !o)} aria-label="menu">
         <span className={open ? styles.barTop : styles.bar} />
@@ -21,6 +21,7 @@ function Navbar() {
         <li><Link to="/portfolio"  onClick={() => setOpen(false)}>Portfolio</Link></li>
         <li><Link to="/history"    onClick={() => setOpen(false)}>History</Link></li>
         <li><Link to="/investors"  onClick={() => setOpen(false)}>Investors</Link></li>
+        <li><Link to="/algorithm"  onClick={() => setOpen(false)}>Algorithm</Link></li>
         <li><Link to="/feed"       onClick={() => setOpen(false)}>Feed</Link></li>
       </ul>
 

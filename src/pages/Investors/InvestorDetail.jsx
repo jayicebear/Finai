@@ -112,7 +112,7 @@ export default function InvestorDetail({ investor: inv, onClose }) {
               </Pie>
               <Tooltip
                 formatter={(v, name) => [`${v}%`, name]}
-                contentStyle={{ background: '#1a1a2e', border: 'none', borderRadius: 8, color: '#f0ede8', fontSize: 11 }}
+                contentStyle={{ background: '#fff', border: '1px solid #eee', borderRadius: 8, color: '#1a1a2e', fontSize: 11, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
               />
             </PieChart>
           </ResponsiveContainer>
