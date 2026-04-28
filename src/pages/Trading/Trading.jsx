@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react'
-import { stocks, generateChartData } from '../../data/stocks'
+import { useState } from 'react'
+import { stocks } from '../../data/stocks'
 import { usePortfolio } from '../../context/PortfolioContext'
 import StockList from './StockList'
 import StockChart from './StockChart'
@@ -12,7 +12,6 @@ function Trading() {
   const [selected, setSelected] = useState(stocks[0])
   const [orderPrice, setOrderPrice] = useState(selected.price)
   const { balance, portfolio, tradeHistory, buy, sell } = usePortfolio()
-  const chartData = useMemo(() => generateChartData(selected.price), [selected.id])
 
   function handleSelect(stock) {
     setSelected(stock)
@@ -34,7 +33,7 @@ function Trading() {
       <StockList stocks={stocks} selected={selected} onSelect={handleSelect} />
 
       <div className={styles.center}>
-        <StockChart stock={selected} data={chartData} />
+        <StockChart stock={selected} />
         <div className={styles.historySection}>
           <div className={styles.historyHeader}>
             <span className={styles.historyTitle}>체결 내역</span>

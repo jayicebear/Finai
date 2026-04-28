@@ -126,7 +126,7 @@ function AIChartPanel({ stocks, selectedStock, onStockChange, chartData: markedD
     if (!background || !payload?.open) return null
     const { open, high, low, close, buyAt, sellAt } = payload
     const bull  = close >= open
-    const color = bull ? '#16a34a' : '#dc2626'
+    const color = bull ? '#dc2626' : '#3b82f6'
     const cx    = x + width / 2
     const bw    = Math.max(2, width - 3)
     const scale = p => background.y + background.height - ((p - yMin) / (yMax - yMin)) * background.height
@@ -306,7 +306,7 @@ function AIChartPanel({ stocks, selectedStock, onStockChange, chartData: markedD
             />
             <Bar dataKey="volume" isAnimationActive={false} maxBarSize={12}>
               {data.map((d, i) => (
-                <Cell key={i} fill={d.close >= d.open ? '#16a34a' : '#dc2626'} fillOpacity={0.55} />
+                <Cell key={i} fill={d.close >= d.open ? '#dc2626' : '#3b82f6'} fillOpacity={0.55} />
               ))}
             </Bar>
             <Brush

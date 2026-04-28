@@ -107,7 +107,7 @@ function LiveDemo() {
       const stockArr = pricesMapRef.current[m.stock]
       const cur      = stockArr[stockArr.length - 1].v
       const action   = cur < STOCK_CFG[m.stock].base ? 'BUY' : 'SELL'
-      const color    = action === 'BUY' ? '#16a34a' : '#dc2626'
+      const color    = action === 'BUY' ? '#dc2626' : '#3b82f6'
       const conf     = Math.floor(Math.random() * 15 + 80)
       const price    = cur.toFixed(2)
       const newSignal = { ...m, action, color, conf, price, id: tradeIdRef.current }
@@ -215,7 +215,7 @@ function LiveDemo() {
                 x={m.i}
                 y={m.v}
                 r={5}
-                fill={m.action === 'BUY' ? '#16a34a' : '#dc2626'}
+                fill={m.action === 'BUY' ? '#dc2626' : '#3b82f6'}
                 stroke="#fff"
                 strokeWidth={2}
                 label={{
@@ -223,7 +223,7 @@ function LiveDemo() {
                   position: m.action === 'BUY' ? 'bottom' : 'top',
                   fontSize: 9,
                   fontWeight: 700,
-                  fill: m.action === 'BUY' ? '#16a34a' : '#dc2626',
+                  fill: m.action === 'BUY' ? '#dc2626' : '#3b82f6',
                   fontFamily: 'system-ui',
                 }}
               />

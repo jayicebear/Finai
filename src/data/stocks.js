@@ -9,6 +9,37 @@ export const stocks = [
   { id: 'NFLX', name: 'Netflix', price: 628.90, change: -8.20, changePct: -1.29 },
 ]
 
+const MA_NS = [5, 20, 60, 120]
+
+function addMAs(data) {
+  return data.map((d, i, arr) => {
+    const row = { ...d }
+    for (const n of MA_NS) {
+      if (i >= n - 1) {
+        let sum = 0
+        for (let j = i - n + 1; j <= i; j++) sum += arr[j].close
+        row[`ma${n}`] = parseFloat((sum / n).toFixed(2))
+      }
+    }
+    return row
+  })
+}
+
+// 모듈 로드 시점에 모든 종목 × 모든 기간 데이터를 미리 계산
+const chartCache = Object.fromEntries(stocks.map(s => {
+  const daily = generateChartData(s.price)
+  return [s.id, {
+    d: addMAs(daily),
+    w: addMAs(aggregateWeekly(daily)),
+    m: addMAs(aggregateMonthly(daily)),
+    y: addMAs(aggregateYearly(daily)),
+  }]
+}))
+
+export function getCachedChartData(stock, period = 'd') {
+  return chartCache[stock.id][period]
+}
+
 export function generateChartData(basePrice, years = 5) {
   const data = []
   let price = basePrice * 0.45

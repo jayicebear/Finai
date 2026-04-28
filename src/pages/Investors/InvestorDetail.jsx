@@ -44,13 +44,13 @@ export default function InvestorDetail({ investor: inv, onClose }) {
       <div className={styles.metricsGrid}>
         <div className={styles.metric}>
           <span className={styles.metricLbl}>총 수익률</span>
-          <span className={styles.metricVal} style={{ color: inv.totalReturn >= 0 ? '#16a34a' : '#dc2626' }}>
+          <span className={styles.metricVal} style={{ color: inv.totalReturn >= 0 ? '#dc2626' : '#3b82f6' }}>
             {inv.totalReturn >= 0 ? '+' : ''}{inv.totalReturn}%
           </span>
         </div>
         <div className={styles.metric}>
           <span className={styles.metricLbl}>이번 달</span>
-          <span className={styles.metricVal} style={{ color: inv.monthReturn >= 0 ? '#16a34a' : '#dc2626' }}>
+          <span className={styles.metricVal} style={{ color: inv.monthReturn >= 0 ? '#dc2626' : '#3b82f6' }}>
             {inv.monthReturn >= 0 ? '+' : ''}{inv.monthReturn}%
           </span>
         </div>

@@ -187,8 +187,8 @@
   border-radius: 10px;
 }
 
-.buy  { color: #16a34a; background: #f0fdf4; }
-.sell { color: #dc2626; background: #fef2f2; }
+.buy  { color: #dc2626; background: #fef2f2; }
+.sell { color: #3b82f6; background: #eff6ff; }
 
 .numCell {
   font-family: system-ui, sans-serif;
@@ -198,7 +198,7 @@
 }
 
 .buyAmt  { color: #dc2626; font-weight: 600; }
-.sellAmt { color: #16a34a; font-weight: 600; }
+.sellAmt { color: #3b82f6; font-weight: 600; }
 
 .empty {
   text-align: center;

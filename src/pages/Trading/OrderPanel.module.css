@@ -143,8 +143,8 @@
   transition: opacity 0.15s;
 }
 
-.buyBtn  { background: #16a34a; }
-.sellBtn { background: #dc2626; }
+.buyBtn  { background: #dc2626; }
+.sellBtn { background: #3b82f6; }
 .buyBtn:hover, .sellBtn:hover { opacity: 0.85; }
 
 /* 보유 현황 */
@@ -166,8 +166,8 @@
 
 .holdingRow span:last-child { font-weight: 600; color: #1a1a2e; }
 
-.up   { color: #16a34a !important; }
-.down { color: #dc2626 !important; }
+.up   { color: #dc2626 !important; }
+.down { color: #3b82f6 !important; }
 
 @media (max-width: 768px) {
   .panel { flex: none; }

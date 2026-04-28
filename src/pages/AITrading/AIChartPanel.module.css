@@ -207,8 +207,8 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.bannerBuy  { background: #f0fdf4; border-color: #16a34a; }
-.bannerSell { background: #fef2f2; border-color: #dc2626; }
+.bannerBuy  { background: #fef2f2; border-color: #dc2626; }
+.bannerSell { background: #eff6ff; border-color: #3b82f6; }
 
 .bannerModel {
   font-size: 11px;
@@ -405,8 +405,8 @@
   flex-shrink: 0;
 }
 
-.logBuy  { color: #16a34a; background: #f0fdf4; }
-.logSell { color: #dc2626; background: #fef2f2; }
+.logBuy  { color: #dc2626; background: #fef2f2; }
+.logSell { color: #3b82f6; background: #eff6ff; }
 
 .logStock {
   font-size: 13px;
@@ -453,5 +453,5 @@
   text-align: right;
 }
 
-.up   { color: #16a34a; }
-.down { color: #dc2626; }
+.up   { color: #dc2626; }
+.down { color: #3b82f6; }

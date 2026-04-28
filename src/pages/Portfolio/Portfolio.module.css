@@ -176,8 +176,8 @@
   padding: 40px 0;
 }
 
-.up { color: #16a34a; font-weight: 600; }
-.down { color: #dc2626; font-weight: 600; }
+.up   { color: #dc2626; font-weight: 600; }
+.down { color: #3b82f6; font-weight: 600; }
 
 @media (max-width: 768px) {
   .page {

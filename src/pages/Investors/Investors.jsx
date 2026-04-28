@@ -13,13 +13,24 @@ const SORT_OPTIONS = [
 ]
 
 export default function Investors() {
-  const [selected, setSelected]     = useState(null)
+  const [selected, setSelected]       = useState(null)
   const [filterStyle, setFilterStyle] = useState('all')
-  const [sortBy, setSortBy]         = useState('totalReturn')
+  const [sortBy, setSortBy]           = useState('totalReturn')
+  const [search, setSearch]           = useState('')
+  const [followed, setFollowed]       = useState(new Set())
 
   const filtered = INVESTORS
     .filter(inv => filterStyle === 'all' || inv.tradingStyle === filterStyle)
+    .filter(inv => inv.name.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => b[sortBy] - a[sortBy])
+
+  function toggleFollow(id) {
+    setFollowed(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
 
   return (
     <div className={styles.page}>
@@ -29,8 +40,14 @@ export default function Investors() {
         <p className={styles.subtitle}>트레이더들의 전략, 수익률, 포트폴리오를 확인하세요.</p>
       </div>
 
-      {/* 필터 + 정렬 */}
+      {/* 검색 + 필터 + 정렬 */}
       <div className={styles.toolbar}>
+        <input
+          className={styles.searchInput}
+          placeholder="이름 검색..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
         <div className={styles.filterGroup}>
           {[
             { value: 'all',    label: '전체' },
@@ -69,6 +86,8 @@ export default function Investors() {
               investor={inv}
               rank={INVESTORS.slice().sort((a,b) => b.totalReturn - a.totalReturn).findIndex(i => i.id === inv.id) + 1}
               selected={selected?.id === inv.id}
+              followed={followed.has(inv.id)}
+              onFollow={() => toggleFollow(inv.id)}
               onClick={() => setSelected(selected?.id === inv.id ? null : inv)}
             />
           ))}

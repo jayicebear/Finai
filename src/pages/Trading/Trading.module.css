@@ -122,13 +122,13 @@
 }
 
 .buy {
-  background: #dcfce7;
-  color: #16a34a;
+  background: #fee2e2;
+  color: #dc2626;
 }
 
 .sell {
-  background: #fee2e2;
-  color: #dc2626;
+  background: #eff6ff;
+  color: #3b82f6;
 }
 
 .stockCell {

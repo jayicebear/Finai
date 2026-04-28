@@ -3,7 +3,7 @@ import {
   ComposedChart, Bar, Line, Cell,
   XAxis, YAxis, Tooltip, Brush, ResponsiveContainer,
 } from 'recharts'
-import { aggregateWeekly, aggregateMonthly, aggregateYearly } from '../../data/stocks'
+import { getCachedChartData } from '../../data/stocks'
 import styles from './StockChart.module.css'
 
 const PERIODS = [
@@ -20,18 +20,6 @@ const MA_LIST = [
   { n: 120, color: '#a855f7', label: '120' },
 ]
 
-function addMAs(data) {
-  return data.map((d, i, arr) => {
-    const row = { ...d }
-    for (const { n, label } of MA_LIST) {
-      if (i >= n - 1) {
-        const avg = arr.slice(i - n + 1, i + 1).reduce((s, x) => s + x.close, 0) / n
-        row[`ma${n}`] = parseFloat(avg.toFixed(2))
-      }
-    }
-    return row
-  })
-}
 
 function initialBrush(len, period) {
   if (period === 'd') return { start: Math.max(0, len - 60),  end: len - 1 }  // 최근 60일
@@ -43,21 +31,14 @@ function initialBrush(len, period) {
 const YAXIS_W = 64
 const CHART_MARGIN = { top: 12, right: 20, left: 0, bottom: 0 }
 
-export default function StockChart({ stock, data: rawData }) {
+export default function StockChart({ stock }) {
   const isUp = stock.change >= 0
   const [period, setPeriod]   = useState('d')
   const [activeMAs, setMAs]   = useState([5, 20])
   const [hovered, setHovered] = useState(null)
   const wrapperRef = useRef(null)
 
-  const baseData = useMemo(() => {
-    if (period === 'w') return aggregateWeekly(rawData)
-    if (period === 'm') return aggregateMonthly(rawData)
-    if (period === 'y') return aggregateYearly(rawData)
-    return rawData
-  }, [period, rawData])
-
-  const data = useMemo(() => addMAs(baseData), [baseData])
+  const data = getCachedChartData(stock, period)
 
   const [brush, setBrush] = useState(() => initialBrush(data.length, period))
 
@@ -101,7 +82,7 @@ export default function StockChart({ stock, data: rawData }) {
     if (!background || !payload?.open) return null
     const { open, high, low, close } = payload
     const bull  = close >= open
-    const color = bull ? '#16a34a' : '#dc2626'
+    const color = bull ? '#dc2626' : '#3b82f6'
     const cx    = x + width / 2
     const bw    = Math.max(2, width - 3)
     const scale = p => background.y + background.height - ((p - yMin) / (yMax - yMin)) * background.height
@@ -235,7 +216,7 @@ export default function StockChart({ stock, data: rawData }) {
             {data.map((d, i) => (
               <Cell
                 key={i}
-                fill={d.close >= d.open ? '#16a34a' : '#dc2626'}
+                fill={d.close >= d.open ? '#dc2626' : '#3b82f6'}
                 fillOpacity={0.55}
               />
             ))}

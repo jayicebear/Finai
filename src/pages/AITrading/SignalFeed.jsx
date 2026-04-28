@@ -2,8 +2,8 @@ import { useState } from 'react'
 import styles from './SignalFeed.module.css'
 
 const TYPE_META = {
-  BUY:  { label: '매수', color: '#16a34a', bg: '#f0fdf4' },
-  SELL: { label: '매도', color: '#dc2626', bg: '#fef2f2' },
+  BUY:  { label: '매수', color: '#dc2626', bg: '#fef2f2' },
+  SELL: { label: '매도', color: '#3b82f6', bg: '#eff6ff' },
   HOLD: { label: '홀드', color: '#d97706', bg: '#fffbeb' },
 }
 
@@ -96,7 +96,7 @@ function SignalFeed({ signals, running, autoMode, model, tradeLog }) {
             {tradeLog.map(t => (
               <li key={t.id} className={`${styles.tradeCard} ${t.type === 'BUY' ? styles.tradeBuy : styles.tradeSell}`}>
                 <div className={styles.tradeLeft}>
-                  <span className={styles.tradeBadge} style={{ color: t.type === 'BUY' ? '#16a34a' : '#dc2626' }}>
+                  <span className={styles.tradeBadge} style={{ color: t.type === 'BUY' ? '#dc2626' : '#3b82f6' }}>
                     {t.type === 'BUY' ? '매수' : '매도'}
                   </span>
                   <span className={styles.tradeTicker}>{t.stock}</span>
