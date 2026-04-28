@@ -11,6 +11,30 @@
   min-width: 0;
 }
 
+.loadingBar {
+  padding: 14px 20px;
+  font-size: 13px;
+  color: #888;
+  background: #f5f2ed;
+  border-bottom: 1px solid #e8e4de;
+  font-family: system-ui, sans-serif;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+.errorBar {
+  padding: 14px 20px;
+  font-size: 13px;
+  color: #dc2626;
+  background: #fef2f2;
+  border-bottom: 1px solid #fecaca;
+  font-family: system-ui, sans-serif;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
+}
+
 .orderCol {
   width: 260px;
   min-width: 260px;

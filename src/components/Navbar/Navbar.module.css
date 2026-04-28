@@ -26,13 +26,23 @@
   font-size: 14px;
 }
 
-.menu a {
+.navLink {
   text-decoration: none;
   color: #1a1a2e;
+  opacity: 0.45;
+  font-weight: 500;
+  transition: opacity 0.15s;
 }
 
-.menu a:hover {
-  opacity: 0.5;
+.navLink:hover {
+  opacity: 0.75;
+}
+
+.navLinkActive {
+  text-decoration: none;
+  color: #1a1a2e;
+  font-weight: 700;
+  opacity: 1;
 }
 
 .auth {

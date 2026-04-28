@@ -10,6 +10,7 @@ import AITrading from './pages/AITrading/AITrading'
 import History from './pages/History/History'
 import Investors from './pages/Investors/Investors'
 import Algorithm from './pages/Algorithm/Algorithm'
+import Strategy from './pages/Strategy/Strategy'
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
           <Route path="/history" element={<History />} />
           <Route path="/investors" element={<Investors />} />
           <Route path="/algorithm" element={<Algorithm />} />
+          <Route path="/strategy" element={<Strategy />} />
         </Routes>
       </PortfolioProvider>
     </BrowserRouter>
