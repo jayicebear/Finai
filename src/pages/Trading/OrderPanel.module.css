@@ -1,28 +1,55 @@
 .panel {
-  background-color: #f8f6f2;
-  padding: 14px;
+  background: #fff;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  flex: 2;
+  gap: 10px;
+  padding: 16px;
+  border-left: 1px solid #ece8e2;
   min-height: 0;
-  border-top: 1px solid #ddd;
   overflow: hidden;
 }
 
-/* 상단 종목 + 잔액 */
-.topRow {
+/* 탭 */
+.tabs {
+  display: flex;
+  background: #f5f2ed;
+  border-radius: 10px;
+  padding: 3px;
+  gap: 3px;
+}
+
+.tab {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+  background: transparent;
+  color: #aaa;
+  transition: all 0.15s;
+}
+
+.tabBuyActive {
+  background: #fff;
+  color: #dc2626;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.tabSellActive {
+  background: #fff;
+  color: #3b82f6;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+/* 종목 */
+.stockRow {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #e5e2dd;
-}
-
-.stockInfo {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  padding: 6px 0 2px;
 }
 
 .stockId {
@@ -32,33 +59,79 @@
   font-family: system-ui, sans-serif;
 }
 
-.stockPrice {
-  font-size: 12px;
-  color: #999;
-  font-family: system-ui, sans-serif;
-}
-
-.balanceInfo {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
-}
-
-.balanceLabel {
-  font-size: 10px;
+.stockName {
+  font-size: 11px;
   color: #bbb;
   font-family: system-ui, sans-serif;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
+  margin-top: 1px;
 }
 
-.balanceValue {
-  font-size: 14px;
+.stockPrice {
+  font-size: 16px;
   font-weight: 700;
   color: #1a1a2e;
   font-family: system-ui, sans-serif;
 }
+
+/* 정보 박스 */
+.infoBox {
+  background: #faf8f5;
+  border: 1px solid #ece8e2;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.infoLbl {
+  font-size: 11px;
+  color: #aaa;
+  font-family: system-ui, sans-serif;
+}
+
+.infoVal {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1a1a2e;
+  font-family: system-ui, sans-serif;
+}
+
+.up   { color: #dc2626 !important; }
+.down { color: #3b82f6 !important; }
+
+/* % 버튼 */
+.pctRow {
+  display: flex;
+  gap: 5px;
+}
+
+.pctBtn {
+  flex: 1;
+  padding: 6px 0;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+  border: 1.5px solid;
+  transition: all 0.12s;
+  background: transparent;
+}
+
+.pctBtn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.pctBtnBuy  { border-color: #fca5a5; color: #dc2626; }
+.pctBtnBuy:hover:not(:disabled)  { background: #fef2f2; }
+
+.pctBtnSell { border-color: #93c5fd; color: #3b82f6; }
+.pctBtnSell:hover:not(:disabled) { background: #eff6ff; }
 
 /* 수량 */
 .qtyRow {
@@ -68,12 +141,13 @@
 }
 
 .qtyBtn {
-  width: 32px;
-  height: 32px;
-  border: 1px solid #ddd;
-  background: #fff;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #e5e2dd;
+  background: #faf8f5;
   border-radius: 8px;
-  font-size: 16px;
+  font-size: 17px;
+  font-weight: 400;
   cursor: pointer;
   font-family: system-ui, sans-serif;
   color: #1a1a2e;
@@ -81,33 +155,38 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  line-height: 1;
+  transition: background 0.12s;
 }
 
 .qtyBtn:hover { background: #ece9e4; }
 
 .qtyInput {
   flex: 1;
-  height: 32px;
+  height: 34px;
   text-align: center;
-  border: 1px solid #ddd;
+  border: 1px solid #e5e2dd;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 15px;
   font-family: system-ui, sans-serif;
-  font-weight: 600;
+  font-weight: 700;
   background: #fff;
   color: #1a1a2e;
   outline: none;
 }
 
-/* 총액 */
+.qtyInput::-webkit-inner-spin-button,
+.qtyInput::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+/* 주문금액 */
 .totalRow {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #fff;
-  border: 1px solid #eee;
+  background: #faf8f5;
+  border: 1px solid #ece8e2;
   border-radius: 8px;
-  padding: 8px 12px;
+  padding: 9px 12px;
 }
 
 .totalLabel {
@@ -117,58 +196,34 @@
 }
 
 .totalValue {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   color: #1a1a2e;
   font-family: system-ui, sans-serif;
 }
 
-/* 버튼 */
-.btnRow {
-  display: flex;
-  gap: 8px;
-}
-
-.buyBtn,
-.sellBtn {
-  flex: 1;
-  padding: 12px;
+/* CTA */
+.orderBtn {
+  width: 100%;
+  padding: 13px;
   border: none;
-  border-radius: 10px;
-  font-size: 14px;
+  border-radius: 12px;
+  font-size: 15px;
   font-weight: 700;
   font-family: system-ui, sans-serif;
   cursor: pointer;
   color: #fff;
-  transition: opacity 0.15s;
+  transition: opacity 0.15s, transform 0.1s;
+  margin-top: 2px;
 }
 
-.buyBtn  { background: #dc2626; }
-.sellBtn { background: #3b82f6; }
-.buyBtn:hover, .sellBtn:hover { opacity: 0.85; }
+.orderBtn:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+.orderBtn:active:not(:disabled) { transform: translateY(0); }
+.orderBtn:disabled { opacity: 0.38; cursor: not-allowed; }
 
-/* 보유 현황 */
-.holding {
-  border-top: 1px solid #e5e2dd;
-  padding-top: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-
-.holdingRow {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  font-family: system-ui, sans-serif;
-  color: #555;
-}
-
-.holdingRow span:last-child { font-weight: 600; color: #1a1a2e; }
-
-.up   { color: #dc2626 !important; }
-.down { color: #3b82f6 !important; }
+.orderBtnBuy  { background: #dc2626; }
+.orderBtnSell { background: #3b82f6; }
 
 @media (max-width: 768px) {
-  .panel { flex: none; }
+  .panel { border-left: none; border-top: 1px solid #ece8e2; }
 }

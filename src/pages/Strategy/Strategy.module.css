@@ -40,6 +40,30 @@
 .runBtn:hover   { opacity: 0.8; }
 .runBtn:disabled { opacity: 0.45; cursor: not-allowed; }
 
+.headerBtns {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.saveStratBtn {
+  background: transparent;
+  color: #1a1a2e;
+  border: 1.5px solid #1a1a2e;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+
+.saveStratBtn:hover {
+  background: #1a1a2e;
+  color: #fff;
+}
+
 /* 2-column body */
 .body {
   display: flex;
@@ -172,6 +196,33 @@
   width: fit-content;
 }
 
+.timeRange {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.timeInput {
+  padding: 7px 10px;
+  border: 1px solid #e8e4de;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #1a1a2e;
+  background: #faf8f5;
+  font-family: inherit;
+  outline: none;
+}
+
+.timeInput:focus {
+  border-color: #1a1a2e;
+}
+
+.timeSep {
+  font-size: 13px;
+  color: #aaa;
+}
+
 .toggleBtn {
   padding: 7px 20px;
   border: 1px solid #e8e4de;
@@ -202,24 +253,150 @@
 }
 
 .indBtn {
-  padding: 6px 12px;
-  border: 1px solid #e8e4de;
-  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px 8px;
+  border: 1.5px solid #e8e4de;
+  border-radius: 12px;
   background: #faf8f5;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   color: #666;
   cursor: pointer;
   font-family: inherit;
-  transition: all 0.15s;
+  transition: all 0.18s;
+  min-width: 110px;
+}
+
+.indBtn:hover {
+  border-color: #c4bfb8;
+  background: #f5f1ec;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.07);
+}
+
+.indPreview {
+  opacity: 0.75;
+  transition: opacity 0.18s;
+}
+
+.indBtn:hover .indPreview,
+.indActive .indPreview {
+  opacity: 1;
+}
+
+.indLabel {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
 .indActive {
   background: #1a1a2e;
   border-color: #1a1a2e;
   color: #f0ede8;
-  font-weight: 700;
+  box-shadow: 0 4px 14px rgba(26,26,46,0.25);
+  transform: translateY(-1px);
 }
+
+.indActive .indPreview {
+  filter: brightness(1.4);
+}
+
+.indicatorHelpPanel {
+  margin: 12px 0 2px;
+  padding: 14px 16px;
+  border: 1px solid #ece7df;
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(250,248,245,0.96) 100%);
+}
+
+.indicatorHelpHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.indicatorHelpEyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9b9388;
+}
+
+.indicatorHelpTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.indicatorHelpSummary {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #5e5a55;
+}
+
+.indicatorHelpExamples {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.indicatorHelpExample {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+}
+
+.indicatorHelpExample p {
+  margin: 5px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #444;
+}
+
+.indicatorHelpExTag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.indicatorHelpDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.indicatorHelpTagLabel {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.indicatorHelpBuy {
+  background: #f5fbf6;
+  border-color: #d1ead7;
+}
+
+.indicatorHelpBuy .indicatorHelpTagLabel { color: #15803d; }
+
+.indicatorHelpSell {
+  background: #fff6f6;
+  border-color: #f0d0d0;
+}
+
+.indicatorHelpSell .indicatorHelpTagLabel { color: #dc2626; }
 
 /* Info box */
 .infoBox {
@@ -421,6 +598,7 @@
   .grid2 { grid-template-columns: 1fr; }
   .grid3 { grid-template-columns: 1fr 1fr; }
   .grid4 { grid-template-columns: 1fr 1fr; }
+  .indicatorHelpExamples { grid-template-columns: 1fr; }
   .metricsRow { gap: 8px; }
   .metric { min-width: 80px; }
   .metricVal { font-size: 16px; }

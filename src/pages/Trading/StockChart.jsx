@@ -1,9 +1,6 @@
-import { useRef, useState, useEffect, useCallback, useMemo } from 'react'
-import {
-  ComposedChart, Bar, Line, Cell,
-  XAxis, YAxis, Tooltip, Brush, ResponsiveContainer,
-} from 'recharts'
-import { getCachedChartData } from '../../data/stocks'
+import { useRef, useEffect, useState } from 'react'
+import { createChart, CrosshairMode, CandlestickSeries, LineSeries, HistogramSeries } from 'lightweight-charts'
+import { fetchChartData } from '../../data/api'
 import styles from './StockChart.module.css'
 
 const PERIODS = [
@@ -20,132 +17,366 @@ const MA_LIST = [
   { n: 120, color: '#a855f7', label: '120' },
 ]
 
+const OVERLAY_LIST = [
+  { key: 'bb',      label: 'BB',    color: '#8b5cf6' },
+  { key: 'vwap',    label: 'VWAP',  color: '#06b6d4' },
+  { key: 'ichimoku',label: 'Cloud', color: '#10b981' },
+]
 
-function initialBrush(len, period) {
-  if (period === 'd') return { start: Math.max(0, len - 60),  end: len - 1 }  // 최근 60일
-  if (period === 'w') return { start: Math.max(0, len - 52),  end: len - 1 }  // 최근 52주 (1년)
-  if (period === 'm') return { start: Math.max(0, len - 24),  end: len - 1 }  // 최근 24개월 (2년)
-  return { start: 0, end: len - 1 }                                            // 년: 전체
+const CHART_OPTS = {
+  layout: { background: { color: '#ffffff' }, textColor: '#aaaaaa', attributionLogo: false },
+  grid: { vertLines: { color: '#f5f2ed' }, horzLines: { color: '#f5f2ed' } },
+  crosshair: { mode: CrosshairMode.Normal },
+  rightPriceScale: { borderColor: '#ece8e2' },
+  timeScale: { borderColor: '#ece8e2', timeVisible: false },
+  handleScroll: true,
+  handleScale: true,
 }
 
-const YAXIS_W = 64
-const CHART_MARGIN = { top: 12, right: 20, left: 0, bottom: 0 }
+function calcBollinger(data, period = 20, mult = 2) {
+  return data.map((d, i, arr) => {
+    if (i < period - 1) return d
+    const slice = arr.slice(i - period + 1, i + 1)
+    const mean = slice.reduce((s, x) => s + x.close, 0) / period
+    const std = Math.sqrt(slice.reduce((s, x) => s + (x.close - mean) ** 2, 0) / period)
+    return { ...d, bbUpper: +(mean + mult * std).toFixed(2), bbMid: +mean.toFixed(2), bbLower: +(mean - mult * std).toFixed(2) }
+  })
+}
 
-export default function StockChart({ stock }) {
+function calcVWAP(data) {
+  let cumTPV = 0, cumVol = 0
+  return data.map(d => {
+    const tp = (d.high + d.low + d.close) / 3
+    cumTPV += tp * (d.volume || 1)
+    cumVol += d.volume || 1
+    return { ...d, vwap: +(cumTPV / cumVol).toFixed(2) }
+  })
+}
+
+class IchimokuCloudPrimitive {
+  constructor() {
+    this._spanA = []
+    this._spanB = []
+    this._visible = false
+    this._chart = null
+    this._series = null
+  }
+  attached({ chart, series }) { this._chart = chart; this._series = series }
+  detached() {}
+  updateAllViews() {}
+  paneViews() {
+    const self = this
+    return [{
+      renderer() {
+        return {
+          draw(target) {
+            if (!self._visible || !self._chart || !self._series || self._spanA.length < 2) return
+            target.useBitmapCoordinateSpace(({ context: ctx, horizontalPixelRatio: hpr, verticalPixelRatio: vpr }) => {
+              const bMap = new Map(self._spanB.map(d => [d.time, d.value]))
+              const pts = []
+              for (const { time, value: vA } of self._spanA) {
+                const vB = bMap.get(time)
+                if (vB == null) continue
+                const x  = self._chart.timeScale().timeToCoordinate(time)
+                const yA = self._series.priceToCoordinate(vA)
+                const yB = self._series.priceToCoordinate(vB)
+                if (x == null || yA == null || yB == null) continue
+                pts.push({ x: x * hpr, yA: yA * vpr, yB: yB * vpr })
+              }
+              if (pts.length < 2) return
+              ctx.save()
+              ctx.beginPath()
+              pts.forEach(({ x, yA }, i) => i === 0 ? ctx.moveTo(x, yA) : ctx.lineTo(x, yA))
+              for (let i = pts.length - 1; i >= 0; i--) ctx.lineTo(pts[i].x, pts[i].yB)
+              ctx.closePath()
+              ctx.fillStyle = 'rgba(16,185,129,0.22)'
+              ctx.fill()
+              ctx.restore()
+            })
+          }
+        }
+      }
+    }]
+  }
+  setData(spanA, spanB) { this._spanA = spanA; this._spanB = spanB }
+  setVisible(v) { this._visible = v }
+}
+
+function calcIchimoku(data) {
+  const hi = (a, b) => Math.max(...data.slice(a, b + 1).map(d => d.high))
+  const lo = (a, b) => Math.min(...data.slice(a, b + 1).map(d => d.low))
+  const tenkan = [], kijun = [], spanA = [], spanB = []
+  data.forEach((d, i) => {
+    if (i >= 8)
+      tenkan.push({ time: d.time, value: +((hi(i-8,i) + lo(i-8,i)) / 2).toFixed(2) })
+    if (i >= 25)
+      kijun.push({ time: d.time, value: +((hi(i-25,i) + lo(i-25,i)) / 2).toFixed(2) })
+    if (i >= 25 && i + 26 < data.length) {
+      const t = (hi(i-8,i) + lo(i-8,i)) / 2
+      const k = (hi(i-25,i) + lo(i-25,i)) / 2
+      spanA.push({ time: data[i+26].time, value: +((t + k) / 2).toFixed(2) })
+    }
+    if (i >= 51 && i + 26 < data.length)
+      spanB.push({ time: data[i+26].time, value: +((hi(i-51,i) + lo(i-51,i)) / 2).toFixed(2) })
+  })
+  return { tenkan, kijun, spanA, spanB }
+}
+
+
+export default function StockChart({ stock, onPriceUpdate }) {
+  const mainRef         = useRef(null)
+  const chartRef        = useRef(null)
+  const candleRef       = useRef(null)
+  const volSeriesRef    = useRef(null)
+  const maSeriesRefs    = useRef({})
+  const overlayRefs     = useRef({})
+
+  const [period, setPeriod]           = useState('d')
+  const [activeMAs, setMAs]           = useState([5, 20])
+  const [activeOverlays, setOverlays] = useState([])
+  const [hovered, setHovered]         = useState(null)
+  const [chartData, setChartData]     = useState([])
+  const [loading, setLoading]         = useState(false)
+  const [error, setError]             = useState(null)
+
   const isUp = stock.change >= 0
-  const [period, setPeriod]   = useState('d')
-  const [activeMAs, setMAs]   = useState([5, 20])
-  const [hovered, setHovered] = useState(null)
-  const wrapperRef = useRef(null)
-
-  const data = getCachedChartData(stock, period)
-
-  const [brush, setBrush] = useState(() => initialBrush(data.length, period))
 
   useEffect(() => {
-    setBrush(initialBrush(data.length, period))
-  }, [stock.id, period, data.length])
+    if (!mainRef.current) return
 
-  const handleWheel = useCallback((e) => {
-    e.preventDefault()
-    setBrush(({ start, end }) => {
-      const visible    = end - start + 1
-      const factor     = e.deltaY > 0 ? 1.15 : 0.87
-      const newVisible = Math.round(Math.max(5, Math.min(data.length, visible * factor)))
-      const center     = Math.round((start + end) / 2)
-      const newStart   = Math.max(0, center - Math.round(newVisible / 2))
-      const newEnd     = Math.min(data.length - 1, newStart + newVisible - 1)
-      return { start: newStart, end: newEnd }
+    const chart = createChart(mainRef.current, {
+      ...CHART_OPTS,
+      width: mainRef.current.clientWidth,
+      height: 380,
     })
-  }, [data.length])
+    chartRef.current = chart
+
+    // Ichimoku — primitive draws the cloud polygon, series draw the lines
+    const ichiCommon = { priceScaleId: 'right', priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, visible: false }
+    overlayRefs.current.ichi_spanA  = chart.addSeries(LineSeries, { color: '#10b981', lineWidth: 1, ...ichiCommon })
+    overlayRefs.current.ichi_spanB  = chart.addSeries(LineSeries, { color: '#10b981', lineWidth: 1, lineStyle: 2, ...ichiCommon })
+    overlayRefs.current.ichi_tenkan = chart.addSeries(LineSeries, { color: '#f43f5e', lineWidth: 1, ...ichiCommon })
+    overlayRefs.current.ichi_kijun  = chart.addSeries(LineSeries, { color: '#3b82f6', lineWidth: 1.5, ...ichiCommon })
+    const cloudPrimitive = new IchimokuCloudPrimitive()
+    overlayRefs.current.ichi_spanA.attachPrimitive(cloudPrimitive)
+    overlayRefs.current.ichi_primitive = cloudPrimitive
+
+    const candle = chart.addSeries(CandlestickSeries, {
+      upColor: '#dc2626', downColor: '#3b82f6',
+      borderUpColor: '#dc2626', borderDownColor: '#3b82f6',
+      wickUpColor: '#dc2626', wickDownColor: '#3b82f6',
+      priceScaleId: 'right',
+    })
+    candleRef.current = candle
+
+    chart.priceScale('right').applyOptions({ scaleMargins: { top: 0.05, bottom: 0.25 } })
+
+    const volSeries = chart.addSeries(HistogramSeries, {
+      priceFormat: { type: 'volume' },
+      priceScaleId: 'vol',
+    })
+    volSeriesRef.current = volSeries
+    chart.priceScale('vol').applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } })
+
+    chart.subscribeCrosshairMove(param => {
+      if (param.time && param.seriesData.has(candle)) {
+        setHovered(param.seriesData.get(candle))
+      } else {
+        setHovered(null)
+      }
+    })
+
+    const ro = new ResizeObserver(() => {
+      if (mainRef.current) chart.applyOptions({ width: mainRef.current.clientWidth })
+    })
+    ro.observe(mainRef.current)
+
+    return () => {
+      ro.disconnect()
+      chart.remove()
+      maSeriesRefs.current = {}
+      overlayRefs.current  = {}
+    }
+  }, [])
 
   useEffect(() => {
-    const el = wrapperRef.current
-    if (!el) return
-    el.addEventListener('wheel', handleWheel, { passive: false })
-    return () => el.removeEventListener('wheel', handleWheel)
-  }, [handleWheel])
+    let cancelled = false
+    setLoading(true)
+    setError(null)
+    fetchChartData(stock, period)
+      .then(data => {
+        if (!cancelled) {
+          setChartData(data)
+          if (onPriceUpdate && data.length >= 2) {
+            const last = data[data.length - 1]
+            const prev = data[data.length - 2]
+            const change = last.close - prev.close
+            onPriceUpdate(stock.id, last.close, change, (change / prev.close) * 100)
+          }
+        }
+      })
+      .catch(err => { if (!cancelled) setError(err.message) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [stock.id, period])
 
-  const visibleData = useMemo(
-    () => data.slice(brush.start, brush.end + 1),
-    [data, brush.start, brush.end]
-  )
-  const yMin = useMemo(() => visibleData.length ? Math.min(...visibleData.map(d => d.low))  * 0.997 : 0, [visibleData])
-  const yMax = useMemo(() => visibleData.length ? Math.max(...visibleData.map(d => d.high)) * 1.003 : 1, [visibleData])
-  const vMax = useMemo(() => data.length ? Math.max(...data.map(d => d.volume)) : 1, [data])
+  useEffect(() => {
+    if (!candleRef.current || !chartRef.current || !chartData.length) return
+
+    candleRef.current.setData(
+      chartData.map(d => ({ time: d.time, open: d.open, high: d.high, low: d.low, close: d.close }))
+    )
+
+    MA_LIST.forEach(({ n, color }) => {
+      if (!maSeriesRefs.current[n]) {
+        maSeriesRefs.current[n] = chartRef.current.addSeries(LineSeries, {
+          color, lineWidth: 1.5,
+          priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false,
+        })
+      }
+      maSeriesRefs.current[n].setData(
+        chartData.filter(d => d[`ma${n}`] != null).map(d => ({ time: d.time, value: d[`ma${n}`] }))
+      )
+      maSeriesRefs.current[n].applyOptions({ visible: activeMAs.includes(n) })
+    })
+
+    // Bollinger Bands
+    const withBB = calcBollinger(chartData)
+    ;['bbUpper', 'bbMid', 'bbLower'].forEach((key, i) => {
+      const color = '#8b5cf6'
+      const style = key === 'bbMid' ? 2 : 0
+      if (!overlayRefs.current[key]) {
+        overlayRefs.current[key] = chartRef.current.addSeries(LineSeries, {
+          color, lineWidth: 1, lineStyle: style,
+          priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false,
+        })
+      }
+      overlayRefs.current[key].setData(
+        withBB.filter(d => d[key] != null).map(d => ({ time: d.time, value: d[key] }))
+      )
+      overlayRefs.current[key].applyOptions({ visible: activeOverlays.includes('bb') })
+    })
+
+    // VWAP
+    const withVWAP = calcVWAP(chartData)
+    if (!overlayRefs.current.vwap) {
+      overlayRefs.current.vwap = chartRef.current.addSeries(LineSeries, {
+        color: '#06b6d4', lineWidth: 1.5,
+        priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false,
+      })
+    }
+    overlayRefs.current.vwap.setData(withVWAP.map(d => ({ time: d.time, value: d.vwap })))
+    overlayRefs.current.vwap.applyOptions({ visible: activeOverlays.includes('vwap') })
+
+    // Ichimoku Cloud (series pre-created in init effect)
+    const ichi = calcIchimoku(chartData)
+    const ichiVis = activeOverlays.includes('ichimoku')
+    overlayRefs.current.ichi_spanA?.setData(ichi.spanA)
+    overlayRefs.current.ichi_spanB?.setData(ichi.spanB)
+    overlayRefs.current.ichi_tenkan?.setData(ichi.tenkan)
+    overlayRefs.current.ichi_kijun?.setData(ichi.kijun)
+    overlayRefs.current.ichi_primitive?.setData(ichi.spanA, ichi.spanB)
+    overlayRefs.current.ichi_primitive?.setVisible(ichiVis)
+    ;['ichi_spanA', 'ichi_spanB', 'ichi_tenkan', 'ichi_kijun'].forEach(k =>
+      overlayRefs.current[k]?.applyOptions({ visible: ichiVis })
+    )
+
+    if (volSeriesRef.current) {
+      volSeriesRef.current.setData(
+        chartData.map(d => ({
+          time: d.time,
+          value: d.volume,
+          color: d.close >= d.open ? 'rgba(220,38,38,0.5)' : 'rgba(59,130,246,0.5)',
+        }))
+      )
+    }
+
+    chartRef.current.timeScale().fitContent()
+  }, [chartData])
+
+  useEffect(() => {
+    MA_LIST.forEach(({ n }) => {
+      maSeriesRefs.current[n]?.applyOptions({ visible: activeMAs.includes(n) })
+    })
+  }, [activeMAs])
+
+  useEffect(() => {
+    ;['bbUpper', 'bbMid', 'bbLower'].forEach(k => {
+      overlayRefs.current[k]?.applyOptions({ visible: activeOverlays.includes('bb') })
+    })
+    overlayRefs.current.vwap?.applyOptions({ visible: activeOverlays.includes('vwap') })
+    const ichiOn = activeOverlays.includes('ichimoku')
+    ;['ichi_tenkan', 'ichi_kijun', 'ichi_spanA', 'ichi_spanB'].forEach(k => {
+      overlayRefs.current[k]?.applyOptions({ visible: ichiOn })
+    })
+    overlayRefs.current.ichi_primitive?.setVisible(ichiOn)
+    overlayRefs.current.ichi_spanA?.applyOptions({}) // trigger re-render for primitive
+  }, [activeOverlays])
 
   function toggleMA(n) {
     setMAs(prev => prev.includes(n) ? prev.filter(x => x !== n) : [...prev, n])
   }
-
-  function CandleBar({ x, width, payload, background }) {
-    if (!background || !payload?.open) return null
-    const { open, high, low, close } = payload
-    const bull  = close >= open
-    const color = bull ? '#dc2626' : '#3b82f6'
-    const cx    = x + width / 2
-    const bw    = Math.max(2, width - 3)
-    const scale = p => background.y + background.height - ((p - yMin) / (yMax - yMin)) * background.height
-    const bodyTop = scale(Math.max(open, close))
-    const bodyH   = Math.max(1, scale(Math.min(open, close)) - bodyTop)
-    return (
-      <g>
-        <line x1={cx} y1={scale(high)} x2={cx} y2={scale(low)} stroke={color} strokeWidth={1.5} />
-        <rect x={cx - bw / 2} y={bodyTop} width={bw} height={bodyH} fill={color} rx={1} />
-      </g>
-    )
+  function toggleOverlay(key) {
+    setOverlays(prev => prev.includes(key) ? prev.filter(x => x !== key) : [...prev, key])
   }
 
-  const display = hovered ?? (visibleData[visibleData.length - 1] || {})
+  const lastBar  = chartData[chartData.length - 1] || {}
+  const prevBar  = chartData[chartData.length - 2] || {}
+  const display  = hovered ?? lastBar
+  const livePrice  = lastBar.close ?? stock.price
+  const liveChange = prevBar.close ? livePrice - prevBar.close : stock.change
+  const livePct    = prevBar.close ? (liveChange / prevBar.close) * 100 : stock.changePct
+  const liveUp     = liveChange >= 0
 
   return (
-    <div className={styles.wrapper} ref={wrapperRef}>
-      {/* 헤더 */}
+    <div className={styles.wrapper}>
       <div className={styles.header}>
         <div className={styles.left}>
           <span className={styles.tickerLabel}>{stock.id}</span>
           <span className={styles.nameLabel}>{stock.name}</span>
-          <span className={`${styles.priceTag} ${isUp ? styles.up : styles.down}`}>
-            ${stock.price.toFixed(2)}
-            <span className={styles.changePct}> {isUp ? '+' : ''}{stock.changePct.toFixed(2)}%</span>
+          <span className={`${styles.priceTag} ${liveUp ? styles.up : styles.down}`}>
+            ${livePrice.toFixed(2)}
+            <span className={styles.changePct}> {liveUp ? '+' : ''}{livePct.toFixed(2)}%</span>
           </span>
         </div>
         <div className={styles.controls}>
           <div className={styles.periodGroup}>
             {PERIODS.map(p => (
-              <button
-                key={p.key}
+              <button key={p.key}
                 className={`${styles.periodBtn} ${period === p.key ? styles.periodActive : ''}`}
                 onClick={() => setPeriod(p.key)}
-              >
-                {p.label}
-              </button>
+              >{p.label}</button>
             ))}
           </div>
           <div className={styles.maGroup}>
             <span className={styles.maLabel}>MA</span>
             {MA_LIST.map(({ n, color, label }) => (
-              <button
-                key={n}
+              <button key={n}
                 className={`${styles.maBtn} ${activeMAs.includes(n) ? styles.maActive : ''}`}
                 style={activeMAs.includes(n) ? { color, borderColor: color, background: color + '18' } : {}}
                 onClick={() => toggleMA(n)}
-              >
-                {label}
-              </button>
+              >{label}</button>
+            ))}
+          </div>
+          <div className={styles.maGroup}>
+            {OVERLAY_LIST.map(({ key, label, color }) => (
+              <button key={key}
+                className={`${styles.maBtn} ${activeOverlays.includes(key) ? styles.maActive : ''}`}
+                style={activeOverlays.includes(key) ? { color, borderColor: color, background: color + '18' } : {}}
+                onClick={() => toggleOverlay(key)}
+              >{label}</button>
             ))}
           </div>
         </div>
       </div>
 
-      {/* OHLC 정보 바 */}
       <div className={styles.ohlcBar}>
         <span className={styles.ohlcItem}>시작 <strong>{display.open ?? '-'}</strong></span>
         <span className={styles.ohlcItem}>고가 <strong style={{ color: '#16a34a' }}>{display.high ?? '-'}</strong></span>
         <span className={styles.ohlcItem}>저가 <strong style={{ color: '#dc2626' }}>{display.low ?? '-'}</strong></span>
         <span className={styles.ohlcItem}>종가 <strong>{display.close ?? '-'}</strong></span>
         {activeMAs.map(n => {
-          const ma = display[`ma${n}`]
+          const ma  = display[`ma${n}`]
           const cfg = MA_LIST.find(m => m.n === n)
           return ma ? (
             <span key={n} className={styles.ohlcItem}>
@@ -155,86 +386,19 @@ export default function StockChart({ stock }) {
         })}
       </div>
 
-      {/* 메인 캔들 차트 — visibleData만 렌더링 */}
-      <ResponsiveContainer width="100%" height={260}>
-        <ComposedChart
-          data={visibleData}
-          margin={CHART_MARGIN}
-          onMouseMove={e => e?.activePayload && setHovered(e.activePayload[0]?.payload)}
-          onMouseLeave={() => setHovered(null)}
-        >
-          <XAxis dataKey="date" hide />
-          <YAxis
-            domain={[yMin, yMax]}
-            tick={{ fontSize: 11, fill: '#aaa', fontFamily: 'system-ui' }}
-            tickLine={false}
-            axisLine={false}
-            tickFormatter={v => `$${v.toFixed(0)}`}
-            width={YAXIS_W}
-            orientation="right"
-          />
-          <Tooltip content={() => null} />
-          <Bar dataKey="close" shape={<CandleBar />} isAnimationActive={false} />
-          {MA_LIST.map(({ n, color }) =>
-            activeMAs.includes(n) ? (
-              <Line
-                key={n}
-                dataKey={`ma${n}`}
-                stroke={color}
-                strokeWidth={1.5}
-                dot={false}
-                activeDot={false}
-                isAnimationActive={false}
-                connectNulls
-              />
-            ) : null
-          )}
-        </ComposedChart>
-      </ResponsiveContainer>
-
-      {/* 거래량 차트 */}
-      <div className={styles.volumeLabel}>거래량</div>
-      <ResponsiveContainer width="100%" height={90}>
-        <ComposedChart data={data} margin={CHART_MARGIN}>
-          <XAxis
-            dataKey="date"
-            tick={{ fontSize: 10, fill: '#bbb', fontFamily: 'system-ui' }}
-            tickLine={false}
-            axisLine={false}
-            interval="preserveStartEnd"
-          />
-          <YAxis
-            domain={[0, vMax]}
-            tick={{ fontSize: 10, fill: '#bbb', fontFamily: 'system-ui' }}
-            tickLine={false}
-            axisLine={false}
-            tickFormatter={v => v >= 1e6 ? `${(v / 1e6).toFixed(1)}M` : `${(v / 1e3).toFixed(0)}K`}
-            width={YAXIS_W}
-            orientation="right"
-          />
-          <Bar dataKey="volume" isAnimationActive={false} maxBarSize={12}>
-            {data.map((d, i) => (
-              <Cell
-                key={i}
-                fill={d.close >= d.open ? '#dc2626' : '#3b82f6'}
-                fillOpacity={0.55}
-              />
-            ))}
-          </Bar>
-          <Brush
-            dataKey="date"
-            startIndex={brush.start}
-            endIndex={brush.end}
-            onChange={({ startIndex, endIndex }) =>
-              setBrush({ start: startIndex, end: endIndex })
-            }
-            height={28}
-            travellerWidth={6}
-            stroke="#ddd"
-            fill="#f5f2ed"
-          />
-        </ComposedChart>
-      </ResponsiveContainer>
+      <div style={{ position: 'relative' }}>
+        <div ref={mainRef} />
+        {loading && (
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.7)', fontSize: 14, color: '#888' }}>
+            불러오는 중...
+          </div>
+        )}
+        {error && (
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.9)', fontSize: 13, color: '#dc2626' }}>
+            {error}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

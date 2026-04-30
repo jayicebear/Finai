@@ -9,9 +9,19 @@ import TradeChat from './TradeChat'
 import styles from './Trading.module.css'
 
 function Trading() {
+  const [liveStocks, setLiveStocks] = useState(stocks)
   const [selected, setSelected] = useState(stocks[0])
   const [orderPrice, setOrderPrice] = useState(selected.price)
   const { balance, portfolio, tradeHistory, buy, sell } = usePortfolio()
+
+  function handlePriceUpdate(stockId, price, change, changePct) {
+    setLiveStocks(prev => prev.map(s =>
+      s.id === stockId ? { ...s, price, change, changePct } : s
+    ))
+    setSelected(prev =>
+      prev.id === stockId ? { ...prev, price, change, changePct } : prev
+    )
+  }
 
   function handleSelect(stock) {
     setSelected(stock)
@@ -30,10 +40,10 @@ function Trading() {
 
   return (
     <div className={styles.page}>
-      <StockList stocks={stocks} selected={selected} onSelect={handleSelect} />
+      <StockList stocks={liveStocks} selected={selected} onSelect={handleSelect} />
 
       <div className={styles.center}>
-        <StockChart stock={selected} />
+        <StockChart stock={selected} onPriceUpdate={handlePriceUpdate} />
         <div className={styles.historySection}>
           <div className={styles.historyHeader}>
             <span className={styles.historyTitle}>체결 내역</span>
@@ -84,6 +94,7 @@ function Trading() {
       <div className={styles.orderCol}>
         <OrderBook stock={selected} orderPrice={orderPrice} onPriceSelect={setOrderPrice} />
         <OrderPanel
+          key={selected.id}
           stock={selected}
           orderPrice={orderPrice}
           balance={balance}

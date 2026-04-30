@@ -1,8 +1,5 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import {
-  ComposedChart, Bar, Line, Cell,
-  XAxis, YAxis, Tooltip, Brush, ResponsiveContainer,
-} from 'recharts'
+import { useState, useEffect, useRef, useMemo } from 'react'
+import { createChart, CrosshairMode, CandlestickSeries, LineSeries, HistogramSeries, createSeriesMarkers } from 'lightweight-charts'
 import { aggregateWeekly, aggregateMonthly, aggregateYearly } from '../../data/stocks'
 import styles from './AIChartPanel.module.css'
 
@@ -20,6 +17,87 @@ const MA_LIST = [
   { n: 120, color: '#a855f7', label: '120' },
 ]
 
+const OVERLAY_LIST = [
+  { key: 'bb',       label: 'BB',    color: '#8b5cf6' },
+  { key: 'vwap',     label: 'VWAP',  color: '#06b6d4' },
+  { key: 'ichimoku', label: 'Cloud', color: '#10b981' },
+]
+
+function calcBollinger(data, period = 20, mult = 2) {
+  return data.map((d, i, arr) => {
+    if (i < period - 1) return d
+    const slice = arr.slice(i - period + 1, i + 1)
+    const mean = slice.reduce((s, x) => s + x.close, 0) / period
+    const std = Math.sqrt(slice.reduce((s, x) => s + (x.close - mean) ** 2, 0) / period)
+    return { ...d, bbUpper: +(mean + mult * std).toFixed(2), bbMid: +mean.toFixed(2), bbLower: +(mean - mult * std).toFixed(2) }
+  })
+}
+
+function calcVWAP(data) {
+  let cumTPV = 0, cumVol = 0
+  return data.map(d => {
+    const tp = (d.high + d.low + d.close) / 3
+    cumTPV += tp * (d.volume || 1)
+    cumVol += d.volume || 1
+    return { ...d, vwap: +(cumTPV / cumVol).toFixed(2) }
+  })
+}
+
+function calcIchimoku(data) {
+  const hi = (a, b) => Math.max(...data.slice(a, b + 1).map(d => d.high))
+  const lo = (a, b) => Math.min(...data.slice(a, b + 1).map(d => d.low))
+  const tenkan = [], kijun = [], spanA = [], spanB = []
+  data.forEach((d, i) => {
+    if (i >= 8)  tenkan.push({ time: d.time, value: +((hi(i-8,i)  + lo(i-8,i))  / 2).toFixed(2) })
+    if (i >= 25) kijun.push ({  time: d.time, value: +((hi(i-25,i) + lo(i-25,i)) / 2).toFixed(2) })
+    if (i >= 25 && i + 26 < data.length) {
+      const t = (hi(i-8,i) + lo(i-8,i)) / 2
+      const k = (hi(i-25,i) + lo(i-25,i)) / 2
+      spanA.push({ time: data[i+26].time, value: +((t + k) / 2).toFixed(2) })
+    }
+    if (i >= 51 && i + 26 < data.length)
+      spanB.push({ time: data[i+26].time, value: +((hi(i-51,i) + lo(i-51,i)) / 2).toFixed(2) })
+  })
+  return { tenkan, kijun, spanA, spanB }
+}
+
+class IchimokuCloudPrimitive {
+  constructor() { this._spanA = []; this._spanB = []; this._visible = false; this._chart = null; this._series = null }
+  attached({ chart, series }) { this._chart = chart; this._series = series }
+  detached() {}
+  updateAllViews() {}
+  paneViews() {
+    const self = this
+    return [{ renderer() { return { draw(target) {
+      if (!self._visible || !self._chart || !self._series || self._spanA.length < 2) return
+      target.useBitmapCoordinateSpace(({ context: ctx, horizontalPixelRatio: hpr, verticalPixelRatio: vpr }) => {
+        const bMap = new Map(self._spanB.map(d => [d.time, d.value]))
+        const pts = []
+        for (const { time, value: vA } of self._spanA) {
+          const vB = bMap.get(time)
+          if (vB == null) continue
+          const x  = self._chart.timeScale().timeToCoordinate(time)
+          const yA = self._series.priceToCoordinate(vA)
+          const yB = self._series.priceToCoordinate(vB)
+          if (x == null || yA == null || yB == null) continue
+          pts.push({ x: x * hpr, yA: yA * vpr, yB: yB * vpr })
+        }
+        if (pts.length < 2) return
+        ctx.save()
+        ctx.beginPath()
+        pts.forEach(({ x, yA }, i) => i === 0 ? ctx.moveTo(x, yA) : ctx.lineTo(x, yA))
+        for (let i = pts.length - 1; i >= 0; i--) ctx.lineTo(pts[i].x, pts[i].yB)
+        ctx.closePath()
+        ctx.fillStyle = 'rgba(16,185,129,0.22)'
+        ctx.fill()
+        ctx.restore()
+      })
+    }}}}]
+  }
+  setData(spanA, spanB) { this._spanA = spanA; this._spanB = spanB }
+  setVisible(v) { this._visible = v }
+}
+
 function addMAs(data) {
   return data.map((d, i, arr) => {
     const row = { ...d }
@@ -33,15 +111,13 @@ function addMAs(data) {
   })
 }
 
-function initialBrush(len, period) {
-  if (period === 'd') return { start: Math.max(0, len - 60),  end: len - 1 }
-  if (period === 'w') return { start: Math.max(0, len - 52),  end: len - 1 }
-  if (period === 'm') return { start: Math.max(0, len - 24),  end: len - 1 }
-  return { start: 0, end: len - 1 }
+const CHART_OPTS = {
+  layout: { background: { color: '#ffffff' }, textColor: '#aaaaaa', attributionLogo: false },
+  grid: { vertLines: { color: '#f5f2ed' }, horzLines: { color: '#f5f2ed' } },
+  crosshair: { mode: CrosshairMode.Normal },
+  rightPriceScale: { borderColor: '#ece8e2' },
+  timeScale: { borderColor: '#ece8e2', timeVisible: false },
 }
-
-const YAXIS_W = 64
-const CHART_MARGIN = { top: 12, right: 20, left: 10, bottom: 0 }
 
 function ActionBanner({ action, model }) {
   const [visible, setVisible] = useState(false)
@@ -67,13 +143,21 @@ function ActionBanner({ action, model }) {
 }
 
 function AIChartPanel({ stocks, selectedStock, onStockChange, chartData: markedData, thinking, lastAction, tradeLog, running, autoMode, model }) {
-  const isUp = selectedStock.change >= 0
+  const isUp = stock => stock.change >= 0
   const recentTrades = tradeLog.slice(0, 6)
 
-  const [period, setPeriod]   = useState('d')
-  const [activeMAs, setMAs]   = useState([5, 20])
+  const mainRef      = useRef(null)
+  const chartRef     = useRef(null)
+  const candleRef    = useRef(null)
+  const volSeriesRef = useRef(null)
+  const maSeriesRefs  = useRef({})
+  const markersRef    = useRef(null)
+
+  const [period, setPeriod] = useState('d')
+  const [activeMAs, setMAs] = useState([5, 20])
+  const [activeOverlays, setOverlays] = useState([])
   const [hovered, setHovered] = useState(null)
-  const wrapperRef = useRef(null)
+  const overlayRefs = useRef({})
 
   const baseData = useMemo(() => {
     if (period === 'w') return aggregateWeekly(markedData)
@@ -84,80 +168,201 @@ function AIChartPanel({ stocks, selectedStock, onStockChange, chartData: markedD
 
   const data = useMemo(() => addMAs(baseData), [baseData])
 
-  const [brush, setBrush] = useState(() => initialBrush(data.length, period))
-
+  // 차트 초기화
   useEffect(() => {
-    setBrush(initialBrush(data.length, period))
-  }, [selectedStock.id, period, data.length])
+    if (!mainRef.current) return
 
-  const handleWheel = useCallback((e) => {
-    e.preventDefault()
-    setBrush(({ start, end }) => {
-      const visible    = end - start + 1
-      const factor     = e.deltaY > 0 ? 1.15 : 0.87
-      const newVisible = Math.round(Math.max(5, Math.min(data.length, visible * factor)))
-      const center     = Math.round((start + end) / 2)
-      const newStart   = Math.max(0, center - Math.round(newVisible / 2))
-      const newEnd     = Math.min(data.length - 1, newStart + newVisible - 1)
-      return { start: newStart, end: newEnd }
+    const chart = createChart(mainRef.current, {
+      ...CHART_OPTS,
+      width: mainRef.current.clientWidth,
+      height: 320,
     })
-  }, [data.length])
+    chartRef.current = chart
+
+    // Ichimoku cloud (added first — renders behind candlesticks)
+    const ichiCommon = { priceScaleId: 'right', priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, visible: false }
+    overlayRefs.current.ichi_spanA  = chart.addSeries(LineSeries, { color: '#10b981', lineWidth: 1, ...ichiCommon })
+    overlayRefs.current.ichi_spanB  = chart.addSeries(LineSeries, { color: '#10b981', lineWidth: 1, lineStyle: 2, ...ichiCommon })
+    overlayRefs.current.ichi_tenkan = chart.addSeries(LineSeries, { color: '#f43f5e', lineWidth: 1, ...ichiCommon })
+    overlayRefs.current.ichi_kijun  = chart.addSeries(LineSeries, { color: '#3b82f6', lineWidth: 1.5, ...ichiCommon })
+    const cloudPrimitive = new IchimokuCloudPrimitive()
+    overlayRefs.current.ichi_spanA.attachPrimitive(cloudPrimitive)
+    overlayRefs.current.ichi_primitive = cloudPrimitive
+
+    const candle = chart.addSeries(CandlestickSeries, {
+      upColor: '#dc2626', downColor: '#3b82f6',
+      borderUpColor: '#dc2626', borderDownColor: '#3b82f6',
+      wickUpColor: '#dc2626', wickDownColor: '#3b82f6',
+      priceScaleId: 'right',
+    })
+    candleRef.current = candle
+    markersRef.current = createSeriesMarkers(candle, [])
+
+    chart.priceScale('right').applyOptions({
+      scaleMargins: { top: 0.05, bottom: 0.25 },
+    })
+
+    const volSeries = chart.addSeries(HistogramSeries, {
+      priceFormat: { type: 'volume' },
+      priceScaleId: 'vol',
+    })
+    volSeriesRef.current = volSeries
+
+    chart.priceScale('vol').applyOptions({
+      scaleMargins: { top: 0.8, bottom: 0 },
+    })
+
+    chart.subscribeCrosshairMove(param => {
+      if (param.time && param.seriesData.has(candle)) {
+        setHovered(param.seriesData.get(candle))
+      } else {
+        setHovered(null)
+      }
+    })
+
+    const ro = new ResizeObserver(() => {
+      if (mainRef.current) chart.applyOptions({ width: mainRef.current.clientWidth })
+    })
+    ro.observe(mainRef.current)
+
+    return () => {
+      ro.disconnect()
+      chart.remove()
+      maSeriesRefs.current = {}
+      overlayRefs.current  = {}
+    }
+  }, [])
+
+  // 데이터 + 마커 업데이트
+  useEffect(() => {
+    if (!candleRef.current || !chartRef.current) return
+
+    candleRef.current.setData(
+      data.map(d => ({ time: d.time, open: d.open, high: d.high, low: d.low, close: d.close }))
+    )
+
+    // BUY/SELL 마커 (일봉만)
+    if (markersRef.current) {
+      if (period === 'd') {
+        const markers = data
+          .filter(d => d.buyAt || d.sellAt)
+          .map(d => d.buyAt ? {
+            time: d.time,
+            position: 'belowBar',
+            color: '#16a34a',
+            shape: 'arrowUp',
+            text: 'BUY',
+          } : {
+            time: d.time,
+            position: 'aboveBar',
+            color: '#dc2626',
+            shape: 'arrowDown',
+            text: 'SELL',
+          })
+        markersRef.current.setMarkers(markers)
+      } else {
+        markersRef.current.setMarkers([])
+      }
+    }
+
+    MA_LIST.forEach(({ n, color }) => {
+      if (!maSeriesRefs.current[n]) {
+        maSeriesRefs.current[n] = chartRef.current.addSeries(LineSeries, {
+          color, lineWidth: 1.5,
+          priceLineVisible: false,
+          lastValueVisible: false,
+          crosshairMarkerVisible: false,
+        })
+      }
+      maSeriesRefs.current[n].setData(
+        data.filter(d => d[`ma${n}`] != null).map(d => ({ time: d.time, value: d[`ma${n}`] }))
+      )
+      maSeriesRefs.current[n].applyOptions({ visible: activeMAs.includes(n) })
+    })
+
+    if (volSeriesRef.current) {
+      volSeriesRef.current.setData(
+        data.map(d => ({
+          time: d.time,
+          value: d.volume ?? 0,
+          color: d.close >= d.open ? 'rgba(220,38,38,0.5)' : 'rgba(59,130,246,0.5)',
+        }))
+      )
+    }
+
+    // Bollinger Bands
+    const withBB = calcBollinger(data)
+    ;['bbUpper', 'bbMid', 'bbLower'].forEach((key) => {
+      const style = key === 'bbMid' ? 2 : 0
+      if (!overlayRefs.current[key]) {
+        overlayRefs.current[key] = chartRef.current.addSeries(LineSeries, {
+          color: '#8b5cf6', lineWidth: 1, lineStyle: style,
+          priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false,
+        })
+      }
+      overlayRefs.current[key].setData(withBB.filter(d => d[key] != null).map(d => ({ time: d.time, value: d[key] })))
+      overlayRefs.current[key].applyOptions({ visible: activeOverlays.includes('bb') })
+    })
+
+    // VWAP
+    const withVWAP = calcVWAP(data)
+    if (!overlayRefs.current.vwap) {
+      overlayRefs.current.vwap = chartRef.current.addSeries(LineSeries, {
+        color: '#06b6d4', lineWidth: 1.5,
+        priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false,
+      })
+    }
+    overlayRefs.current.vwap.setData(withVWAP.map(d => ({ time: d.time, value: d.vwap })))
+    overlayRefs.current.vwap.applyOptions({ visible: activeOverlays.includes('vwap') })
+
+    // Ichimoku
+    const ichi = calcIchimoku(data)
+    const ichiVis = activeOverlays.includes('ichimoku')
+    overlayRefs.current.ichi_spanA?.setData(ichi.spanA)
+    overlayRefs.current.ichi_spanB?.setData(ichi.spanB)
+    overlayRefs.current.ichi_tenkan?.setData(ichi.tenkan)
+    overlayRefs.current.ichi_kijun?.setData(ichi.kijun)
+    overlayRefs.current.ichi_primitive?.setData(ichi.spanA, ichi.spanB)
+    overlayRefs.current.ichi_primitive?.setVisible(ichiVis)
+    ;['ichi_spanA', 'ichi_spanB', 'ichi_tenkan', 'ichi_kijun'].forEach(k =>
+      overlayRefs.current[k]?.applyOptions({ visible: ichiVis })
+    )
+
+    chartRef.current.timeScale().fitContent()
+  }, [data, period])
+
+  // MA 표시/숨김
+  useEffect(() => {
+    MA_LIST.forEach(({ n }) => {
+      maSeriesRefs.current[n]?.applyOptions({ visible: activeMAs.includes(n) })
+    })
+  }, [activeMAs])
 
   useEffect(() => {
-    const el = wrapperRef.current
-    if (!el) return
-    el.addEventListener('wheel', handleWheel, { passive: false })
-    return () => el.removeEventListener('wheel', handleWheel)
-  }, [handleWheel])
-
-  const visibleData = useMemo(
-    () => data.slice(brush.start, brush.end + 1),
-    [data, brush.start, brush.end]
-  )
-  const yMin = useMemo(() => visibleData.length ? Math.min(...visibleData.map(d => d.low  ?? d.price)) * 0.997 : 0, [visibleData])
-  const yMax = useMemo(() => visibleData.length ? Math.max(...visibleData.map(d => d.high ?? d.price)) * 1.003 : 1, [visibleData])
-  const vMax = useMemo(() => data.length ? Math.max(...data.map(d => d.volume ?? 0)) : 1, [data])
+    ;['bbUpper', 'bbMid', 'bbLower'].forEach(k =>
+      overlayRefs.current[k]?.applyOptions({ visible: activeOverlays.includes('bb') })
+    )
+    overlayRefs.current.vwap?.applyOptions({ visible: activeOverlays.includes('vwap') })
+    const ichiOn = activeOverlays.includes('ichimoku')
+    ;['ichi_spanA', 'ichi_spanB', 'ichi_tenkan', 'ichi_kijun'].forEach(k =>
+      overlayRefs.current[k]?.applyOptions({ visible: ichiOn })
+    )
+    overlayRefs.current.ichi_primitive?.setVisible(ichiOn)
+    overlayRefs.current.ichi_spanA?.applyOptions({})
+  }, [activeOverlays])
 
   function toggleMA(n) {
     setMAs(prev => prev.includes(n) ? prev.filter(x => x !== n) : [...prev, n])
   }
-
-  function CandleBar({ x, width, payload, background }) {
-    if (!background || !payload?.open) return null
-    const { open, high, low, close, buyAt, sellAt } = payload
-    const bull  = close >= open
-    const color = bull ? '#dc2626' : '#3b82f6'
-    const cx    = x + width / 2
-    const bw    = Math.max(2, width - 3)
-    const scale = p => background.y + background.height - ((p - yMin) / (yMax - yMin)) * background.height
-    const bodyTop = scale(Math.max(open, close))
-    const bodyH   = Math.max(1, scale(Math.min(open, close)) - bodyTop)
-    return (
-      <g>
-        <line x1={cx} y1={scale(high)} x2={cx} y2={scale(low)} stroke={color} strokeWidth={1.5} />
-        <rect x={cx - bw / 2} y={bodyTop} width={bw} height={bodyH} fill={color} rx={1} />
-        {buyAt && period === 'd' && (
-          <g>
-            <circle cx={cx} cy={scale(buyAt)} r={10} fill="#16a34a" opacity={0.15} />
-            <circle cx={cx} cy={scale(buyAt)} r={5}  fill="#16a34a" />
-            <text x={cx} y={scale(buyAt) - 14} textAnchor="middle" fontSize={9} fill="#16a34a" fontWeight="700">BUY</text>
-          </g>
-        )}
-        {sellAt && period === 'd' && (
-          <g>
-            <circle cx={cx} cy={scale(sellAt)} r={10} fill="#dc2626" opacity={0.15} />
-            <circle cx={cx} cy={scale(sellAt)} r={5}  fill="#dc2626" />
-            <text x={cx} y={scale(sellAt) + 18} textAnchor="middle" fontSize={9} fill="#dc2626" fontWeight="700">SELL</text>
-          </g>
-        )}
-      </g>
-    )
+  function toggleOverlay(key) {
+    setOverlays(prev => prev.includes(key) ? prev.filter(x => x !== key) : [...prev, key])
   }
 
-  const display = hovered ?? (visibleData[visibleData.length - 1] || {})
+  const lastBar = data[data.length - 1] || {}
+  const display = hovered ?? lastBar
 
   return (
-    <div className={styles.wrapper} ref={wrapperRef}>
+    <div className={styles.wrapper}>
       {/* 종목 탭 */}
       <div className={styles.stockBar}>
         {stocks.map(s => (
@@ -182,8 +387,8 @@ function AIChartPanel({ stocks, selectedStock, onStockChange, chartData: markedD
         </div>
         <div className={styles.priceGroup}>
           <span className={styles.price}>${selectedStock.price.toFixed(2)}</span>
-          <span className={`${styles.change} ${isUp ? styles.up : styles.down}`}>
-            {isUp ? '+' : ''}{selectedStock.change.toFixed(2)} ({isUp ? '+' : ''}{selectedStock.changePct.toFixed(2)}%)
+          <span className={`${styles.change} ${isUp(selectedStock) ? styles.up : styles.down}`}>
+            {isUp(selectedStock) ? '+' : ''}{selectedStock.change.toFixed(2)} ({isUp(selectedStock) ? '+' : ''}{selectedStock.changePct.toFixed(2)}%)
           </span>
         </div>
         <div className={styles.aiStatus}>
@@ -214,9 +419,7 @@ function AIChartPanel({ stocks, selectedStock, onStockChange, chartData: markedD
               key={p.key}
               className={`${styles.periodBtn} ${period === p.key ? styles.periodActive : ''}`}
               onClick={() => setPeriod(p.key)}
-            >
-              {p.label}
-            </button>
+            >{p.label}</button>
           ))}
         </div>
         <div className={styles.maGroup}>
@@ -227,21 +430,29 @@ function AIChartPanel({ stocks, selectedStock, onStockChange, chartData: markedD
               className={`${styles.maBtn} ${activeMAs.includes(n) ? styles.maActive : ''}`}
               style={activeMAs.includes(n) ? { color, borderColor: color, background: color + '18' } : {}}
               onClick={() => toggleMA(n)}
-            >
-              {label}
-            </button>
+            >{label}</button>
+          ))}
+        </div>
+        <div className={styles.maGroup}>
+          {OVERLAY_LIST.map(({ key, label, color }) => (
+            <button
+              key={key}
+              className={`${styles.maBtn} ${activeOverlays.includes(key) ? styles.maActive : ''}`}
+              style={activeOverlays.includes(key) ? { color, borderColor: color, background: color + '18' } : {}}
+              onClick={() => toggleOverlay(key)}
+            >{label}</button>
           ))}
         </div>
       </div>
 
-      {/* OHLC 정보 바 */}
+      {/* OHLC */}
       <div className={styles.ohlcBar}>
         <span className={styles.ohlcItem}>시작 <strong>{display.open ?? '-'}</strong></span>
         <span className={styles.ohlcItem}>고가 <strong style={{ color: '#16a34a' }}>{display.high ?? '-'}</strong></span>
         <span className={styles.ohlcItem}>저가 <strong style={{ color: '#dc2626' }}>{display.low ?? '-'}</strong></span>
         <span className={styles.ohlcItem}>종가 <strong>{display.close ?? '-'}</strong></span>
         {activeMAs.map(n => {
-          const ma = display[`ma${n}`]
+          const ma  = display[`ma${n}`]
           const cfg = MA_LIST.find(m => m.n === n)
           return ma ? (
             <span key={n} className={styles.ohlcItem}>
@@ -251,78 +462,11 @@ function AIChartPanel({ stocks, selectedStock, onStockChange, chartData: markedD
         })}
       </div>
 
-      {/* 체결 배너 */}
       <ActionBanner action={lastAction} model={model} />
 
-      {/* 메인 캔들 차트 */}
+      {/* 차트 (캔들 + 거래량 통합) */}
       <div className={styles.chartWrap}>
-        <ResponsiveContainer width="100%" height={240}>
-          <ComposedChart
-            data={visibleData}
-            margin={CHART_MARGIN}
-            onMouseMove={e => e?.activePayload && setHovered(e.activePayload[0]?.payload)}
-            onMouseLeave={() => setHovered(null)}
-          >
-            <XAxis dataKey="date" hide />
-            <YAxis
-              domain={[yMin, yMax]}
-              tick={{ fontSize: 10, fill: '#bbb', fontFamily: 'system-ui' }}
-              tickLine={false}
-              axisLine={false}
-              tickFormatter={v => `$${v.toFixed(0)}`}
-              width={YAXIS_W}
-              orientation="right"
-            />
-            <Tooltip content={() => null} />
-            <Bar dataKey="close" shape={<CandleBar />} isAnimationActive={false} />
-            {MA_LIST.map(({ n, color }) =>
-              activeMAs.includes(n) ? (
-                <Line key={n} dataKey={`ma${n}`} stroke={color} strokeWidth={1.5}
-                  dot={false} activeDot={false} isAnimationActive={false} connectNulls />
-              ) : null
-            )}
-          </ComposedChart>
-        </ResponsiveContainer>
-
-        {/* 거래량 */}
-        <div className={styles.volumeLabel}>거래량</div>
-        <ResponsiveContainer width="100%" height={80}>
-          <ComposedChart data={data} margin={CHART_MARGIN}>
-            <XAxis
-              dataKey="date"
-              tick={{ fontSize: 10, fill: '#bbb', fontFamily: 'system-ui' }}
-              tickLine={false}
-              axisLine={false}
-              interval="preserveStartEnd"
-            />
-            <YAxis
-              domain={[0, vMax]}
-              tick={{ fontSize: 10, fill: '#bbb', fontFamily: 'system-ui' }}
-              tickLine={false}
-              axisLine={false}
-              tickFormatter={v => v >= 1e6 ? `${(v / 1e6).toFixed(1)}M` : `${(v / 1e3).toFixed(0)}K`}
-              width={YAXIS_W}
-              orientation="right"
-            />
-            <Bar dataKey="volume" isAnimationActive={false} maxBarSize={12}>
-              {data.map((d, i) => (
-                <Cell key={i} fill={d.close >= d.open ? '#dc2626' : '#3b82f6'} fillOpacity={0.55} />
-              ))}
-            </Bar>
-            <Brush
-              dataKey="date"
-              startIndex={brush.start}
-              endIndex={brush.end}
-              onChange={({ startIndex, endIndex }) =>
-                setBrush({ start: startIndex, end: endIndex })
-              }
-              height={28}
-              travellerWidth={6}
-              stroke="#ddd"
-              fill="#f5f2ed"
-            />
-          </ComposedChart>
-        </ResponsiveContainer>
+        <div ref={mainRef} />
       </div>
 
       {/* 체결 내역 */}

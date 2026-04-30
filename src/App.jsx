@@ -11,6 +11,7 @@ import History from './pages/History/History'
 import Investors from './pages/Investors/Investors'
 import Algorithm from './pages/Algorithm/Algorithm'
 import Strategy from './pages/Strategy/Strategy'
+import Analysis from './pages/Analysis/Analysis'
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
           <Route path="/investors" element={<Investors />} />
           <Route path="/algorithm" element={<Algorithm />} />
           <Route path="/strategy" element={<Strategy />} />
+          <Route path="/analysis" element={<Analysis />} />
         </Routes>
       </PortfolioProvider>
     </BrowserRouter>

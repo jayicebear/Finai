@@ -62,8 +62,9 @@ export function generateChartData(basePrice, years = 5) {
 
     const yr = date.getFullYear().toString().slice(2)
     const dateLabel = `${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} '${yr}`
+    const time = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`
 
-    data.push({ date: dateLabel, open, high, low, close, price: close, volume })
+    data.push({ date: dateLabel, time, open, high, low, close, price: close, volume })
   }
   return data
 }
@@ -75,6 +76,7 @@ function aggregate(data, size) {
     if (!slice.length) continue
     result.push({
       date:   slice[0].date,
+      time:   slice[0].time,
       open:   slice[0].open,
       high:   Math.max(...slice.map(d => d.high)),
       low:    Math.min(...slice.map(d => d.low)),
