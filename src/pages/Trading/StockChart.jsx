@@ -2,7 +2,7 @@ import { useRef, useEffect, useState } from 'react'
 import { createChart, CrosshairMode, CandlestickSeries, LineSeries, HistogramSeries } from 'lightweight-charts'
 import { fetchChartData } from '../../data/api'
 import styles from './StockChart.module.css'
-
+// changed
 const PERIODS = [
   { key: 'd', label: '일' },
   { key: 'w', label: '주' },
