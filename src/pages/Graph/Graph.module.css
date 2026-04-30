@@ -1,0 +1,345 @@
+.page {
+  min-height: calc(100vh - 60px);
+  background: #faf8f5;
+  padding: 32px 40px;
+  font-family: system-ui, sans-serif;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 3px;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: #aaa;
+}
+
+/* Controls */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.controlItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.controlLabel {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #aaa;
+}
+
+.sliderRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.slider {
+  width: 140px;
+  accent-color: #1a1a2e;
+  cursor: pointer;
+}
+
+.sliderVal {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1a2e;
+  min-width: 36px;
+}
+
+/* Sector filter bar */
+.sectorBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.sectorBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1.5px solid #e8e4de;
+  border-radius: 20px;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+
+.sectorBtn:hover {
+  border-color: #ccc;
+  color: #1a1a2e;
+}
+
+.sectorBtnAll {
+  background: #1a1a2e;
+  border-color: #1a1a2e;
+  color: #f0ede8;
+}
+
+.sectorBtnActive {
+  color: #fff;
+}
+
+.sectorDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Body layout */
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.canvasWrap {
+  background: #fff;
+  border: 1px solid #e8e4de;
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Legend */
+.legend {
+  position: absolute;
+  bottom: 16px;
+  left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.legendTitle {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #aaa;
+  margin-bottom: 2px;
+}
+
+.legendRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legendLine {
+  display: block;
+  width: 22px;
+  height: 2px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.legendLbl {
+  font-size: 11px;
+  color: #666;
+  font-weight: 500;
+}
+
+/* Detail panel */
+.panel {
+  background: #fff;
+  border: 1px solid #e8e4de;
+  border-radius: 16px;
+  padding: 22px 24px;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.panelTicker {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.panelName {
+  font-size: 14px;
+  font-weight: 500;
+  color: #555;
+}
+
+.panelSector {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 10px;
+  margin-left: auto;
+}
+
+.panelMcap {
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 18px;
+}
+
+.panelMcap strong {
+  color: #1a1a2e;
+}
+
+.panelConnTitle {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #aaa;
+  margin-bottom: 10px;
+}
+
+.panelConnList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.panelConnItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 14px;
+  background: #faf8f5;
+  border: 1px solid #f0ede8;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.12s, box-shadow 0.12s;
+  flex: 1;
+  min-width: 200px;
+}
+
+.panelConnItem:hover {
+  background: #f5f1ec;
+  box-shadow: 0 2px 8px rgba(26,26,46,0.06);
+}
+
+.panelConnLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.panelConnDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.panelConnTicker {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.panelConnName {
+  display: block;
+  font-size: 11px;
+  color: #aaa;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panelCorrWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  min-width: 60px;
+}
+
+.panelCorrBar {
+  height: 3px;
+  border-radius: 2px;
+  max-width: 60px;
+  min-width: 8px;
+  transition: width 0.2s;
+}
+
+.panelCorrVal {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.panelEmpty {
+  font-size: 13px;
+  color: #bbb;
+  padding: 8px 0;
+}
+
+/* Empty state */
+.panelEmpty2 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #e8e4de;
+  border-radius: 16px;
+  text-align: center;
+}
+
+.panelEmptyIcon {
+  font-size: 32px;
+  color: #d4d0ca;
+  line-height: 1;
+}
+
+.panelEmpty2 p {
+  font-size: 13px;
+  color: #bbb;
+  line-height: 1.6;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .page { padding: 20px 16px; }
+  .header { gap: 12px; }
+  .panelConnItem { min-width: 100%; }
+}

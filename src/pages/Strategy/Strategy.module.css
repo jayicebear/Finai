@@ -98,6 +98,52 @@
   gap: 8px;
 }
 
+/* 조건 활성/비활성 토글 */
+.condToggle {
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  border: none;
+  background: #ddd;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.2s;
+  margin-left: 4px;
+}
+
+.condToggleOn {
+  background: #1a1a2e;
+}
+
+.condToggleThumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s;
+  display: block;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.condToggleOn .condToggleThumb {
+  transform: translateX(16px);
+}
+
+.condToggleLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: #aaa;
+  letter-spacing: 0.3px;
+}
+
+.condToggleOn + .condToggleLabel {
+  color: #1a1a2e;
+}
+
 .badge {
   font-size: 10px;
   font-weight: 700;

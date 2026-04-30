@@ -11,7 +11,9 @@ import History from './pages/History/History'
 import Investors from './pages/Investors/Investors'
 import Algorithm from './pages/Algorithm/Algorithm'
 import Strategy from './pages/Strategy/Strategy'
+import Graph from './pages/Graph/Graph'
 import Analysis from './pages/Analysis/Analysis'
+import Screener from './pages/Screener/Screener'
 
 function App() {
   return (
@@ -29,6 +31,8 @@ function App() {
           <Route path="/algorithm" element={<Algorithm />} />
           <Route path="/strategy" element={<Strategy />} />
           <Route path="/analysis" element={<Analysis />} />
+          <Route path="/screener" element={<Screener />} />
+          <Route path="/graph"   element={<Graph />} />
         </Routes>
       </PortfolioProvider>
     </BrowserRouter>

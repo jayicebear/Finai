@@ -26,6 +26,8 @@ function Navbar() {
         <li><NavLink to="/investors"  className={navClass} onClick={() => setOpen(false)}>Investors</NavLink></li>
         <li><NavLink to="/algorithm"  className={navClass} onClick={() => setOpen(false)}>Algorithm</NavLink></li>
         <li><NavLink to="/strategy"   className={navClass} onClick={() => setOpen(false)}>Strategy</NavLink></li>
+        <li><NavLink to="/screener"   className={navClass} onClick={() => setOpen(false)}>Screener</NavLink></li>
+        <li><NavLink to="/graph"      className={navClass} onClick={() => setOpen(false)}>Graph</NavLink></li>
         <li><NavLink to="/analysis"   className={navClass} onClick={() => setOpen(false)}>Analysis</NavLink></li>
         <li><NavLink to="/feed"       className={navClass} onClick={() => setOpen(false)}>Feed</NavLink></li>
       </ul>

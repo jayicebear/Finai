@@ -207,6 +207,8 @@ export default function Strategy() {
   const [priorities,  setPriorities]  = useState(DEFAULT_PRIORITIES)
   const dragIndex = useRef(null)
 
+  const [entryEnabled, setEntryEnabled] = useState(true)
+  const [exitEnabled,  setExitEnabled]  = useState(true)
   const [results, setResults] = useState(null)
   const [running, setRunning] = useState(false)
 
@@ -309,8 +311,19 @@ export default function Strategy() {
 
         {/* 왼쪽 — 진입 조건 */}
         <div className={styles.col}>
-          <div className={styles.section}>
-            <h3 className={styles.sectionTitle}>진입 조건 <span className={styles.badgeBuy}>매수</span></h3>
+          <div className={styles.section} style={!entryEnabled ? { opacity: 0.4, pointerEvents: 'none' } : {}}>
+            <h3 className={styles.sectionTitle}>
+              진입 조건 <span className={styles.badgeBuy}>매수</span>
+              <button
+                className={`${styles.condToggle} ${entryEnabled ? styles.condToggleOn : ''}`}
+                onClick={() => setEntryEnabled(v => !v)}
+                title={entryEnabled ? '진입 조건 비활성화' : '진입 조건 활성화'}
+                style={{ pointerEvents: 'auto' }}
+              >
+                <span className={styles.condToggleThumb} />
+              </button>
+              <span className={styles.condToggleLabel}>{entryEnabled ? 'ON' : 'OFF'}</span>
+            </h3>
 
             {/* 진입 시간 제한 */}
             <div className={styles.field}>
@@ -411,14 +424,24 @@ export default function Strategy() {
                   onChange={e => setMaxPos(Number(e.target.value))} />
               </div>
             </div>
-
           </div>
         </div>
 
         {/* 오른쪽 — 청산 조건 + 우선순위 통합 */}
         <div className={styles.col}>
-          <div className={styles.section}>
-            <h3 className={styles.sectionTitle}>청산 조건 <span className={styles.badge}>매도</span></h3>
+          <div className={styles.section} style={!exitEnabled ? { opacity: 0.4, pointerEvents: 'none' } : {}}>
+            <h3 className={styles.sectionTitle}>
+              청산 조건 <span className={styles.badge}>매도</span>
+              <button
+                className={`${styles.condToggle} ${exitEnabled ? styles.condToggleOn : ''}`}
+                onClick={() => setExitEnabled(v => !v)}
+                title={exitEnabled ? '청산 조건 비활성화' : '청산 조건 활성화'}
+                style={{ pointerEvents: 'auto' }}
+              >
+                <span className={styles.condToggleThumb} />
+              </button>
+              <span className={styles.condToggleLabel}>{exitEnabled ? 'ON' : 'OFF'}</span>
+            </h3>
 
             <div className={styles.grid2}>
               <div className={styles.field}>
