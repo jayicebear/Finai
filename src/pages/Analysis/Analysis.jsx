@@ -4,6 +4,7 @@ import { usePortfolio } from '../../context/PortfolioContext'
 import styles from './Analysis.module.css'
 
 const API_KEY = import.meta.env.VITE_OPENAI_API_KEY
+const MODEL   = import.meta.env.VITE_OPENAI_MODEL 
 
 const SUGGESTIONS = ['AAPL', 'TSLA', 'NVDA', '삼성전자', 'Microsoft', 'Bitcoin']
 
@@ -15,7 +16,7 @@ async function callGPT(apiKey, prompt) {
       'Authorization': `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: 'gpt-5.4-mini',
+      model: MODEL,
       tools: [{ type: 'web_search_preview' }],
       input: prompt,
     }),

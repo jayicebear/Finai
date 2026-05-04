@@ -63,6 +63,56 @@ function initAllPrices() {
   return Object.fromEntries(Object.keys(STOCK_CFG).map(s => [s, initPrices(s)]))
 }
 
+function FeatureCard({ icon, title, desc, delay }) {
+  const ref = useRef(null)
+  const [visible, setVisible] = useState(false)
+  const [tilt, setTilt] = useState({ x: 0, y: 0 })
+  const [hovering, setHovering] = useState(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const obs = new IntersectionObserver(
+      ([entry]) => setVisible(entry.isIntersecting),
+      { threshold: 0.15 }
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+
+  const onMove = (e) => {
+    const rect = ref.current.getBoundingClientRect()
+    const dx = (e.clientX - rect.left - rect.width / 2) / (rect.width / 2)
+    const dy = (e.clientY - rect.top - rect.height / 2) / (rect.height / 2)
+    setTilt({ x: -dy * 7, y: dx * 7 })
+  }
+
+  return (
+    <div
+      ref={ref}
+      className={styles.card}
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible
+          ? `perspective(700px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) translateZ(${hovering ? '10px' : '0'})`
+          : 'translateY(30px)',
+        transition: hovering
+          ? 'opacity 0.1s, transform 0.12s ease-out, box-shadow 0.15s, border-color 0.15s'
+          : `opacity 0.65s ${delay}ms ease, transform 0.65s ${delay}ms ease, box-shadow 0.3s, border-color 0.2s`,
+        boxShadow: hovering ? '0 16px 40px rgba(26,26,46,0.13)' : undefined,
+        borderColor: hovering ? '#b0aca6' : undefined,
+      }}
+      onMouseMove={onMove}
+      onMouseEnter={() => setHovering(true)}
+      onMouseLeave={() => { setHovering(false); setTilt({ x: 0, y: 0 }) }}
+    >
+      <div className={styles.cardIcon}>{icon}</div>
+      <h3 className={styles.cardTitle}>{title}</h3>
+      <p className={styles.cardDesc}>{desc}</p>
+    </div>
+  )
+}
+
 function LiveDemo() {
   const [pricesMap,  setPricesMap]  = useState(initAllPrices)
   const [signal,     setSignal]     = useState(null)
@@ -285,12 +335,30 @@ function LiveDemo() {
 
 export default function Landing() {
   const [openIdx, setOpenIdx] = useState(null)
+  const orb1Ref = useRef(null)
+  const orb2Ref = useRef(null)
+  const orb3Ref = useRef(null)
+
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY
+      if (orb1Ref.current) orb1Ref.current.style.transform = `translateY(${y * 0.25}px)`
+      if (orb2Ref.current) orb2Ref.current.style.transform = `translateY(${y * 0.42}px)`
+      if (orb3Ref.current) orb3Ref.current.style.transform = `translateY(${y * 0.18}px)`
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   return (
     <main className={styles.page}>
 
       {/* ── Hero ── */}
-      <section className={styles.hero}>
+      <section className={styles.heroSection}>
+        <div ref={orb1Ref} className={styles.orb1} />
+        <div ref={orb2Ref} className={styles.orb2} />
+        <div ref={orb3Ref} className={styles.orb3} />
+        <div className={styles.hero}>
         <div className={styles.heroLeft}>
           <p className={styles.badge}>AI PAPER TRADING FOR TRADERS</p>
           <h1 className={styles.title}>
@@ -309,18 +377,15 @@ export default function Landing() {
         <div className={styles.heroRight}>
           <LiveDemo />
         </div>
+        </div>
       </section>
 
       {/* ── Features ── */}
       <section className={styles.features}>
         <p className={styles.featuresLabel}>WHY APEXIS</p>
         <div className={styles.cards}>
-          {FEATURES.map(({ icon, title, desc }) => (
-            <div key={title} className={styles.card}>
-              <div className={styles.cardIcon}>{icon}</div>
-              <h3 className={styles.cardTitle}>{title}</h3>
-              <p className={styles.cardDesc}>{desc}</p>
-            </div>
+          {FEATURES.map(({ icon, title, desc }, i) => (
+            <FeatureCard key={title} icon={icon} title={title} desc={desc} delay={i * 120} />
           ))}
         </div>
       </section>

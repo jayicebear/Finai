@@ -9,7 +9,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   gap: 24px;
   flex-wrap: wrap;
 }
@@ -26,7 +26,6 @@
   color: #aaa;
 }
 
-/* Controls */
 .controls {
   display: flex;
   align-items: center;
@@ -66,7 +65,46 @@
   min-width: 36px;
 }
 
-/* Sector filter bar */
+/* Mode tabs */
+.modeTabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.modeTab {
+  padding: 7px 16px;
+  border: 1.5px solid #e8e4de;
+  border-radius: 20px;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+
+.modeTab:hover {
+  border-color: #1a1a2e;
+  color: #1a1a2e;
+}
+
+.modeTabActive {
+  background: #1a1a2e;
+  border-color: #1a1a2e;
+  color: #f0ede8;
+}
+
+.modeDesc {
+  font-size: 12px;
+  color: #aaa;
+  margin-left: 6px;
+}
+
+/* Sector filter */
 .sectorBar {
   display: flex;
   flex-wrap: wrap;
@@ -91,7 +129,7 @@
 }
 
 .sectorBtn:hover {
-  border-color: #ccc;
+  border-color: #bbb;
   color: #1a1a2e;
 }
 
@@ -112,35 +150,40 @@
   flex-shrink: 0;
 }
 
-/* Body layout */
+/* Body */
 .body {
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
 
-.canvasWrap {
-  background: #fff;
+.canvasOuter {
+  height: 580px;
+  background: #faf8f5;
   border: 1px solid #e8e4de;
   border-radius: 16px;
   overflow: hidden;
   position: relative;
 }
 
-.svg {
-  display: block;
+.g6Canvas {
   width: 100%;
-  height: auto;
+  height: 100%;
 }
 
-/* Legend */
+/* Edge legend */
 .legend {
   position: absolute;
   bottom: 16px;
   left: 20px;
+  background: rgba(255,255,255,0.92);
+  border: 1px solid #f0ede8;
+  border-radius: 10px;
+  padding: 10px 14px;
   display: flex;
   flex-direction: column;
   gap: 5px;
+  pointer-events: none;
 }
 
 .legendTitle {
@@ -161,7 +204,7 @@
 .legendLine {
   display: block;
   width: 22px;
-  height: 2px;
+  height: 2.5px;
   border-radius: 2px;
   flex-shrink: 0;
 }
@@ -296,7 +339,6 @@
   border-radius: 2px;
   max-width: 60px;
   min-width: 8px;
-  transition: width 0.2s;
 }
 
 .panelCorrVal {
@@ -311,7 +353,6 @@
   padding: 8px 0;
 }
 
-/* Empty state */
 .panelEmpty2 {
   display: flex;
   flex-direction: column;
@@ -338,8 +379,73 @@
   margin: 0;
 }
 
+/* Edge floating card */
+.edgeCard {
+  background: #fff;
+  border: 1px solid #e8e4de;
+  border-radius: 14px;
+  padding: 14px 16px;
+  width: 260px;
+  box-shadow: 0 8px 28px rgba(26,26,46,0.13);
+  font-family: system-ui, sans-serif;
+}
+
+.edgeCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.edgeCardTickers {
+  font-size: 13px;
+  font-weight: 800;
+  color: #1a1a2e;
+  letter-spacing: -0.3px;
+}
+
+.edgeCardCorr {
+  font-size: 12px;
+  font-weight: 700;
+  margin-left: auto;
+}
+
+.edgeCardClose {
+  background: none;
+  border: none;
+  font-size: 12px;
+  color: #bbb;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+  transition: color 0.12s;
+}
+
+.edgeCardClose:hover { color: #555; }
+
+.edgeCardReason {
+  font-size: 12px;
+  line-height: 1.65;
+  color: #555;
+  margin: 0 0 10px;
+}
+
+.edgeCardTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.edgeCardTag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 8px;
+  letter-spacing: 0.02em;
+}
+
 @media (max-width: 768px) {
   .page { padding: 20px 16px; }
-  .header { gap: 12px; }
+  .flowWrap { height: 400px; }
   .panelConnItem { min-width: 100%; }
 }
