@@ -2,6 +2,9 @@ import { useState, useMemo, useRef } from 'react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 import IndicatorPreview from './IndicatorPreview'
 import styles from './Strategy.module.css'
+import { SIGNAL_FNS, combineSignals } from '../../services/indicators'
+import { runBacktest as execBacktest } from '../../services/backtest'
+import { getCachedChartData, stocks } from '../../data/stocks'
 
 const STOCKS     = ['AAPL', 'TSLA', 'NVDA', 'MSFT', 'AMZN', 'GOOGL', 'META', 'NFLX']
 const TIMEFRAMES = ['1D', '1W', '1M']
@@ -180,7 +183,9 @@ export default function Strategy() {
   const [timeframe,  setTimeframe]  = useState('1D')
   const [stock,      setStock]      = useState('AAPL')
 
-  const [indicator, setIndicator] = useState('ma')
+  const [activeIndicators, setActiveIndicators] = useState(new Set(['ma']))
+  const [focusedIndicator, setFocusedIndicator] = useState('ma')
+  const [combineMode, setCombineMode] = useState('AND')
   const [indParams, setIndParams] = useState({
     ma:         { fast: 5,  slow: 20, offset: 0 },
     rsi:        { period: 14, oversold: 30, overbought: 70 },
@@ -209,29 +214,154 @@ export default function Strategy() {
 
   const [entryEnabled, setEntryEnabled] = useState(true)
   const [exitEnabled,  setExitEnabled]  = useState(true)
-  const [results, setResults] = useState(null)
-  const [running, setRunning] = useState(false)
+  const [results,   setResults]   = useState(null)
+  const [running,   setRunning]   = useState(false)
+  const [priceData, setPriceData] = useState(null)
+  const [btError,   setBtError]   = useState(null)
+
+  const [saveModal,      setSaveModal]      = useState(false)
+  const [stratName,      setStratName]      = useState('')
+  const [loadModal,      setLoadModal]      = useState(false)
+  const [savedList,      setSavedList]      = useState(() => JSON.parse(localStorage.getItem('my_strategies') || '[]'))
+  const [compareModal,   setCompareModal]   = useState(false)
+  const [compareSelected, setCompareSelected] = useState(new Set())
+  const [compareResults, setCompareResults]  = useState([])
+
+  function toggleIndicator(id) {
+    setFocusedIndicator(id)
+    setActiveIndicators(prev => {
+      const next = new Set(prev)
+      if (next.has(id) && next.size > 1) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
   function runBacktest() {
     setRunning(true)
+    setBtError(null)
+    setCompareResults([])
     setTimeout(() => {
-      const trades      = Math.floor(Math.random() * 80 + 40)
-      const winRate     = Math.random() * 25 + 45
-      const curve       = generateEquityCurve(capital, winRate, trades)
-      const finalEq     = curve[curve.length - 1].equity
-      const totalReturn = parseFloat(((finalEq - capital) / capital * 100).toFixed(2))
-      const maxDD       = parseFloat((Math.random() * 15 + 3).toFixed(2))
-      const sharpe      = parseFloat((Math.random() * 1.5 + 0.3).toFixed(2))
-      setResults({ trades, winRate: parseFloat(winRate.toFixed(1)), totalReturn, maxDD, sharpe, curve, finalEq })
-      setRunning(false)
-    }, 900)
+      try {
+        const stockInfo  = stocks.find(s => s.id === stock)
+        const data       = getCachedChartData(stockInfo, 'd')
+        const allSignals = [...activeIndicators].map(id => SIGNAL_FNS[id](data, indParams[id]))
+        const signals    = allSignals.length === 1 ? allSignals[0] : combineSignals(allSignals, combineMode)
+        const result     = execBacktest(data, signals, {
+          capital, commission, slippage,
+          stopLoss, takeProfit, maxHoldDays,
+          maxPos,
+        })
+        setResults(result)
+        setPriceData(data)
+      } catch (e) {
+        console.error('백테스트 오류:', e)
+        setBtError(e.message || String(e))
+      } finally {
+        setRunning(false)
+      }
+    }, 300)
+  }
+
+  const COMPARE_COLORS = ['#f59e0b', '#2563eb', '#16a34a', '#dc2626', '#8b5cf6']
+
+  const compatibleStrategies = useMemo(() =>
+    savedList.filter(s => s.activeIndicators),
+    [savedList]
+  )
+
+  function runComparison() {
+    const compared = []
+    let colorIdx = 0
+    for (const s of savedList) {
+      if (!compareSelected.has(s.id)) continue
+      try {
+        const stockInfo  = stocks.find(st => st.id === s.stock)
+        const data       = getCachedChartData(stockInfo, 'd')
+        const allSignals = s.activeIndicators.map(id => SIGNAL_FNS[id](data, s.indParams[id]))
+        const signals    = allSignals.length === 1 ? allSignals[0] : combineSignals(allSignals, s.combineMode)
+        const result     = execBacktest(data, signals, {
+          capital: s.capital, commission: s.commission, slippage: s.slippage,
+          stopLoss: s.stopLoss, takeProfit: s.takeProfit,
+          maxHoldDays: s.maxHoldDays, maxPos: s.maxPos,
+        })
+        compared.push({ id: s.id, key: `c${colorIdx}`, name: s.name, indicators: s.activeIndicators.join('+'), result, color: COMPARE_COLORS[colorIdx++ % COMPARE_COLORS.length] })
+      } catch (e) { console.error(e) }
+    }
+    setCompareResults(compared)
+    setCompareModal(false)
+  }
+
+  function confirmSave() {
+    if (!stratName.trim()) return
+    const saved = JSON.parse(localStorage.getItem('my_strategies') || '[]')
+    saved.unshift({
+      id:        Date.now(),
+      name:      stratName.trim(),
+      stock, timeframe, capital, commission, slippage,
+      activeIndicators: [...activeIndicators], combineMode, indParams, maxPos,
+      stopLoss, takeProfit, maxHoldDays,
+      savedAt: new Date().toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+    })
+    localStorage.setItem('my_strategies', JSON.stringify(saved))
+    setSavedList(saved)
+    setSaveModal(false)
+    setStratName('')
+  }
+
+  function loadStrategy(s) {
+    setStock(s.stock)
+    setTimeframe(s.timeframe)
+    setCapital(s.capital)
+    setCommission(s.commission)
+    setSlippage(s.slippage)
+    setActiveIndicators(new Set(s.activeIndicators))
+    setFocusedIndicator(s.activeIndicators[0])
+    setCombineMode(s.combineMode)
+    setIndParams(s.indParams)
+    setMaxPos(s.maxPos)
+    setStopLoss(s.stopLoss)
+    setTakeProfit(s.takeProfit)
+    setMaxHoldDays(s.maxHoldDays)
+    setLoadModal(false)
+  }
+
+  function deleteStrategy(id) {
+    const next = savedList.filter(s => s.id !== id)
+    localStorage.setItem('my_strategies', JSON.stringify(next))
+    setSavedList(next)
   }
 
   const minEq = useMemo(() => results ? Math.min(...results.curve.map(d => d.equity)) * 0.98 : 0, [results])
   const maxEq = useMemo(() => results ? Math.max(...results.curve.map(d => d.equity)) * 1.02 : 1, [results])
 
-  const indLabel = INDICATORS.find(i => i.id === indicator)?.label ?? ''
-  const indicatorInfo = INDICATOR_DETAILS.find(item => item.id === indicator)
+  const activeLabels   = [...activeIndicators].map(id => INDICATORS.find(i => i.id === id)?.label).filter(Boolean).join(' + ')
+  const indicatorInfo  = INDICATOR_DETAILS.find(item => item.id === focusedIndicator)
+
+  const entrySet = useMemo(() => results ? new Set(results.tradeLog.map(t => t.entryIdx)) : null, [results])
+  const exitSet  = useMemo(() => results ? new Set(results.tradeLog.map(t => t.exitIdx))  : null, [results])
+
+  const compareOnlyCurve = useMemo(() => {
+    if (!compareResults.length) return null
+    const base = compareResults[0].result.curve
+    return base.map((pt, i) => {
+      const row = { t: pt.t, date: pt.date }
+      compareResults.forEach(cr => { row[cr.key] = cr.result.curve[i]?.equity })
+      return row
+    })
+  }, [compareResults])
+
+  const compareMinEq = useMemo(() => {
+    if (!compareResults.length) return 0
+    const allVals = compareResults.flatMap(cr => cr.result.curve.map(p => p.equity))
+    return Math.min(...allVals) * 0.98
+  }, [compareResults])
+
+  const compareMaxEq = useMemo(() => {
+    if (!compareResults.length) return 1
+    const allVals = compareResults.flatMap(cr => cr.result.curve.map(p => p.equity))
+    return Math.max(...allVals) * 1.02
+  }, [compareResults])
 
   return (
     <div className={styles.page}>
@@ -241,17 +371,17 @@ export default function Strategy() {
           <p className={styles.subtitle}>전략을 설정하고 백테스트를 실행하세요</p>
         </div>
         <div className={styles.headerBtns}>
+          {savedList.length > 1 && (
+            <button className={styles.saveStratBtn} onClick={() => { setCompareSelected(new Set()); setCompareModal(true) }}>
+              전략 비교 <span className={styles.savedCount}>{savedList.length}</span>
+            </button>
+          )}
+          <button className={styles.saveStratBtn} onClick={() => setLoadModal(true)}>
+            불러오기 {savedList.length > 0 && <span className={styles.savedCount}>{savedList.length}</span>}
+          </button>
           <button className={styles.saveStratBtn} onClick={() => {
-            const config = {
-              stock, timeframe, capital, commission, slippage,
-              indicator, indParams, maxPos, volumeFilter, trendFilter, candlePattern,
-              useEntryTime, entryTimeFrom, entryTimeTo,
-              stopLoss, takeProfit, trailingStop, maxHoldDays, useExitTime,
-              priorities: priorities.map(p => p.label),
-              savedAt: new Date().toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
-            }
-            localStorage.setItem('my_strategy_config', JSON.stringify(config))
-            alert('전략이 저장되었습니다.')
+            setStratName('')
+            setSaveModal(true)
           }}>
             전략 저장
           </button>
@@ -345,12 +475,30 @@ export default function Strategy() {
 
             {/* 지표 선택 */}
             <div className={styles.field}>
-              <label className={styles.label}>지표 선택</label>
+              <div className={styles.indicatorLabelRow}>
+                <label className={styles.label}>지표 선택</label>
+                {activeIndicators.size > 1 && (
+                  <div className={styles.combineModeWrap}>
+                    <span className={styles.combineModeLabel}>신호 결합</span>
+                    <div className={styles.toggleGroup}>
+                      <button className={`${styles.toggleBtn} ${combineMode === 'AND' ? styles.toggleActive : ''}`} onClick={() => setCombineMode('AND')}>AND</button>
+                      <button className={`${styles.toggleBtn} ${combineMode === 'OR'  ? styles.toggleActive : ''}`} onClick={() => setCombineMode('OR')}>OR</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              {activeIndicators.size > 1 && (
+                <p className={styles.combineModeHint}>
+                  {combineMode === 'AND'
+                    ? '모든 지표가 동시에 같은 신호를 낼 때만 매수·매도 — 신호가 적지만 정확도가 높아요.'
+                    : '지표 중 하나라도 신호를 내면 매수·매도 — 신호가 많지만 노이즈도 늘어요.'}
+                </p>
+              )}
               <div className={styles.indicatorRow}>
                 {INDICATORS.map(ind => (
                   <button key={ind.id}
-                    className={`${styles.indBtn} ${indicator === ind.id ? styles.indActive : ''}`}
-                    onClick={() => setIndicator(ind.id)}
+                    className={`${styles.indBtn} ${activeIndicators.has(ind.id) ? styles.indActive : ''}`}
+                    onClick={() => toggleIndicator(ind.id)}
                   >
                     <div className={styles.indPreview}>
                       <IndicatorPreview id={ind.id} />
@@ -388,13 +536,18 @@ export default function Strategy() {
               </div>
             )}
 
-            <div className={styles.paramBox}>
-              <IndicatorParams
-                indicator={indicator}
-                params={indParams[indicator] ?? {}}
-                setParams={p => setIndParams(prev => ({ ...prev, [indicator]: p(prev[indicator] ?? {}) }))}
-              />
-            </div>
+            {[...activeIndicators].map(id => (
+              <div key={id} className={styles.paramBox}>
+                <div className={styles.paramBoxLabel}>
+                  {INDICATORS.find(i => i.id === id)?.label}
+                </div>
+                <IndicatorParams
+                  indicator={id}
+                  params={indParams[id] ?? {}}
+                  setParams={p => setIndParams(prev => ({ ...prev, [id]: p(prev[id] ?? {}) }))}
+                />
+              </div>
+            ))}
 
             <div className={styles.divider} />
 
@@ -530,10 +683,111 @@ export default function Strategy() {
         </div>
       </div>
 
+      {/* 전략 불러오기 모달 */}
+      {loadModal && (
+        <div className={styles.modalOverlay} onClick={() => setLoadModal(false)}>
+          <div className={styles.modal} style={{ width: 520 }} onClick={e => e.stopPropagation()}>
+            <h3 className={styles.modalTitle}>저장된 전략</h3>
+            {savedList.length === 0 ? (
+              <p className={styles.modalEmpty}>저장된 전략이 없어요.</p>
+            ) : (
+              <div className={styles.savedList}>
+                {savedList.map(s => (
+                  <div key={s.id} className={styles.savedItem}>
+                    <div className={styles.savedItemMain} onClick={() => loadStrategy(s)}>
+                      <span className={styles.savedItemName}>{s.name}</span>
+                      <span className={styles.savedItemMeta}>{s.stock} · {(s.activeIndicators ?? [s.indicator]).join(' + ')} · {s.timeframe}</span>
+                      <span className={styles.savedItemDate}>{s.savedAt}</span>
+                    </div>
+                    <button className={styles.savedItemDel} onClick={() => deleteStrategy(s.id)} title="삭제">✕</button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className={styles.modalBtns} style={{ marginTop: 20 }}>
+              <button className={styles.modalCancelBtn} onClick={() => setLoadModal(false)}>닫기</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 전략 비교 선택 모달 */}
+      {compareModal && (
+        <div className={styles.modalOverlay} onClick={() => setCompareModal(false)}>
+          <div className={styles.modal} style={{ width: 520 }} onClick={e => e.stopPropagation()}>
+            <h3 className={styles.modalTitle}>전략 비교</h3>
+            <p className={styles.modalSub}>비교할 전략을 2개 이상 선택하세요</p>
+            <div className={styles.savedList}>
+              {compatibleStrategies.map(s => (
+                <div key={s.id}
+                  className={`${styles.savedItem} ${compareSelected.has(s.id) ? styles.savedItemSelected : ''}`}
+                  onClick={() => setCompareSelected(prev => {
+                    const next = new Set(prev)
+                    next.has(s.id) ? next.delete(s.id) : next.add(s.id)
+                    return next
+                  })}
+                >
+                  <span className={styles.compareCheck}>{compareSelected.has(s.id) ? '✓' : ''}</span>
+                  <div className={styles.savedItemMain} style={{ cursor: 'default' }}>
+                    <span className={styles.savedItemName}>{s.name}</span>
+                    <span className={styles.savedItemMeta}>{s.activeIndicators.join(' + ')} · {s.combineMode}</span>
+                    <span className={styles.savedItemDate}>{s.savedAt}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className={styles.modalBtns} style={{ marginTop: 20 }}>
+              <button className={styles.modalCancelBtn} onClick={() => setCompareModal(false)}>취소</button>
+              <button className={styles.runBtn} disabled={compareSelected.size === 0} onClick={runComparison}>
+                비교 실행 {compareSelected.size > 0 && `(${compareSelected.size}개)`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 전략 저장 모달 */}
+      {saveModal && (
+        <div className={styles.modalOverlay} onClick={() => setSaveModal(false)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <h3 className={styles.modalTitle}>전략 저장</h3>
+            <p className={styles.modalSub}>{stock} · {activeLabels} · {timeframe}</p>
+            <div className={styles.field} style={{ marginBottom: 20 }}>
+              <label className={styles.label}>전략 이름</label>
+              <input
+                className={styles.input}
+                placeholder="예: AAPL RSI 단기 전략"
+                value={stratName}
+                onChange={e => setStratName(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && stratName.trim()) confirmSave()
+                }}
+                autoFocus
+              />
+            </div>
+            <div className={styles.modalBtns}>
+              <button className={styles.modalCancelBtn} onClick={() => setSaveModal(false)}>취소</button>
+              <button className={styles.runBtn} disabled={!stratName.trim()} onClick={confirmSave}>저장</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {btError && (
+        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 12, padding: '14px 18px', marginBottom: 20, color: '#dc2626', fontSize: 13 }}>
+          백테스트 오류: {btError}
+        </div>
+      )}
+
       {/* 백테스트 결과 */}
       {results && (
         <div className={styles.results}>
-          <h3 className={styles.resultsTitle}>백테스트 결과 — {stock} · {indLabel} · {timeframe}</h3>
+          <h3 className={styles.resultsTitle}>백테스트 결과 — {stock} · {activeLabels} · {timeframe}</h3>
+          {results.trades === 0 && activeIndicators.size > 1 && combineMode === 'AND' && (
+            <p className={styles.zeroTradeHint}>
+              AND 모드에서 {activeIndicators.size}개 지표가 동시에 신호를 내는 경우가 없었어요. OR 모드로 바꾸거나 지표 수를 줄여보세요.
+            </p>
+          )}
           <div className={styles.metricsRow}>
             <div className={`${styles.metric} ${results.totalReturn >= 0 ? styles.metricUp : styles.metricDown}`}>
               <span className={styles.metricLbl}>총 수익률</span>
@@ -560,11 +814,20 @@ export default function Strategy() {
               <span className={styles.metricVal}>{results.sharpe}</span>
             </div>
           </div>
-          <div className={styles.chartWrap}>
+          <div className={styles.chartWrap} style={{ marginBottom: 16 }}>
             <div className={styles.chartLabel}>자산 곡선 (Equity Curve)</div>
             <ResponsiveContainer width="100%" height={220}>
-              <LineChart data={results.curve} margin={{ top: 8, right: 24, left: 0, bottom: 0 }}>
-                <XAxis dataKey="t" hide />
+              <LineChart data={results.curve} margin={{ top: 8, right: 24, left: 0, bottom: 24 }}>
+                <XAxis dataKey="date"
+                  interval={Math.floor(results.curve.length / 6)}
+                  tick={{ fontSize: 11, fill: '#bbb', fontFamily: 'system-ui' }}
+                  tickLine={false} axisLine={false}
+                  tickFormatter={v => {
+                    if (!v) return ''
+                    const d = new Date(v)
+                    return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}`
+                  }}
+                />
                 <YAxis domain={[minEq, maxEq]}
                   tick={{ fontSize: 11, fill: '#aaa', fontFamily: 'system-ui' }}
                   tickLine={false} axisLine={false}
@@ -572,14 +835,117 @@ export default function Strategy() {
                   width={52} orientation="right" />
                 <Tooltip
                   contentStyle={{ background: '#fff', border: '1px solid #eee', borderRadius: 8, fontSize: 11 }}
-                  formatter={v => [`$${v.toLocaleString()}`, '자산']}
-                  labelFormatter={v => `거래 ${v}건`} />
+                  formatter={v => [`$${v?.toLocaleString()}`, activeLabels]}
+                  labelFormatter={v => v} />
                 <ReferenceLine y={capital} stroke="#aaa" strokeDasharray="4 2" />
-                <Line dataKey="equity"
+                <Line dataKey="equity" name="equity"
                   stroke={results.totalReturn >= 0 ? '#16a34a' : '#dc2626'}
                   strokeWidth={2} dot={false} isAnimationActive={false} />
               </LineChart>
             </ResponsiveContainer>
+          </div>
+          {priceData && entrySet && exitSet && (
+            <div className={styles.chartWrap}>
+              <div className={styles.chartLabel}>
+                주가 & 매매 시점
+                <span className={styles.tradeLegend}>
+                  <span className={styles.legendBuy}>● 매수</span>
+                  <span className={styles.legendSell}>● 매도</span>
+                </span>
+              </div>
+              <ResponsiveContainer width="100%" height={220}>
+                <LineChart data={priceData} margin={{ top: 8, right: 24, left: 0, bottom: 24 }}>
+                  <XAxis dataKey="time" interval={Math.floor(priceData.length / 6)}
+                    tick={{ fontSize: 11, fill: '#bbb', fontFamily: 'system-ui' }}
+                    tickLine={false} axisLine={false}
+                    tickFormatter={v => { if (!v) return ''; const d = new Date(v); return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}` }}
+                  />
+                  <YAxis tick={{ fontSize: 11, fill: '#aaa', fontFamily: 'system-ui' }}
+                    tickLine={false} axisLine={false} tickFormatter={v => `$${v}`}
+                    width={52} orientation="right" domain={['auto', 'auto']} />
+                  <Tooltip contentStyle={{ background: '#fff', border: '1px solid #eee', borderRadius: 8, fontSize: 11 }}
+                    formatter={v => [`$${v?.toLocaleString()}`, '종가']} labelFormatter={v => v} />
+                  <Line dataKey="close" stroke="#94a3b8" strokeWidth={1.5} isAnimationActive={false}
+                    dot={(props) => {
+                      const { cx, cy, index } = props
+                      if (entrySet.has(index)) return <circle key={`b${index}`} cx={cx} cy={cy} r={5} fill="#16a34a" stroke="#fff" strokeWidth={1.5} />
+                      if (exitSet.has(index))  return <circle key={`s${index}`} cx={cx} cy={cy} r={5} fill="#dc2626" stroke="#fff" strokeWidth={1.5} />
+                      return <g key={`n${index}`} />
+                    }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </div>
+      )}
+
+      {compareResults.length > 0 && compareOnlyCurve && (
+        <div className={styles.results}>
+          <h3 className={styles.resultsTitle}>전략 비교 결과</h3>
+          <div className={styles.compareTable}>
+            <div className={styles.chartLabel} style={{ marginBottom: 8 }}>
+              전략 비교 — 자산 곡선
+              <span className={styles.tradeLegend}>
+                {compareResults.map(cr => (
+                  <span key={cr.key} style={{ color: cr.color, fontWeight: 700 }}>● {cr.name}</span>
+                ))}
+              </span>
+            </div>
+            <ResponsiveContainer width="100%" height={220}>
+              <LineChart data={compareOnlyCurve} margin={{ top: 8, right: 24, left: 0, bottom: 24 }}>
+                <XAxis dataKey="date"
+                  interval={Math.floor(compareOnlyCurve.length / 6)}
+                  tick={{ fontSize: 11, fill: '#bbb', fontFamily: 'system-ui' }}
+                  tickLine={false} axisLine={false}
+                  tickFormatter={v => { if (!v) return ''; const d = new Date(v); return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}` }}
+                />
+                <YAxis domain={[compareMinEq, compareMaxEq]}
+                  tick={{ fontSize: 11, fill: '#aaa', fontFamily: 'system-ui' }}
+                  tickLine={false} axisLine={false}
+                  tickFormatter={v => `$${(v / 1000).toFixed(0)}k`}
+                  width={52} orientation="right" />
+                <Tooltip
+                  contentStyle={{ background: '#fff', border: '1px solid #eee', borderRadius: 8, fontSize: 11 }}
+                  formatter={(v, name) => [`$${v?.toLocaleString()}`, compareResults.find(c => c.key === name)?.name ?? name]}
+                  labelFormatter={v => v} />
+                <ReferenceLine y={compareResults[0]?.result?.curve[0]?.equity ?? 10000} stroke="#aaa" strokeDasharray="4 2" />
+                {compareResults.map(cr => (
+                  <Line key={cr.key} dataKey={cr.key} name={cr.key}
+                    stroke={cr.color} strokeWidth={2} dot={false} isAnimationActive={false} />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+
+            <div className={styles.compareTableHeader} style={{ marginTop: 16 }}>
+              <span className={styles.compareTableLbl} />
+              {compareResults.map(cr => (
+                <span key={cr.key} className={styles.compareTableCell} style={{ color: cr.color }}>{cr.name}</span>
+              ))}
+            </div>
+            {[
+              { lbl: '총 수익률', key: 'totalReturn', fmt: v => `${v >= 0 ? '+' : ''}${v}%`, best: 'max' },
+              { lbl: '최종 자산', key: 'finalEq',    fmt: v => `$${v.toLocaleString()}`,       best: 'max' },
+              { lbl: '승률',      key: 'winRate',    fmt: v => `${v}%`,                         best: 'max' },
+              { lbl: '총 거래',   key: 'trades',     fmt: v => `${v}건`,                         best: null  },
+              { lbl: '최대 낙폭', key: 'maxDD',      fmt: v => `-${v}%`,                        best: 'min' },
+              { lbl: 'Sharpe',    key: 'sharpe',     fmt: v => `${v}`,                          best: 'max' },
+            ].map(({ lbl, key, fmt, best }) => {
+              const allVals = compareResults.map(c => c.result[key])
+              const winner  = best === 'max' ? Math.max(...allVals) : best === 'min' ? Math.min(...allVals) : null
+              return (
+                <div key={lbl} className={styles.compareTableRow}>
+                  <span className={styles.compareTableLbl}>{lbl}</span>
+                  {compareResults.map(cr => (
+                    <span key={cr.key} className={`${styles.compareTableCell} ${cr.result[key] === winner ? styles.compareWin : ''}`}>
+                      {fmt(cr.result[key])}
+                    </span>
+                  ))}
+                </div>
+              )
+            })}
+            <div style={{ textAlign: 'right', marginTop: 8 }}>
+              <button className={styles.clearCompareBtn} onClick={() => setCompareResults([])}>비교 초기화</button>
+            </div>
           </div>
         </div>
       )}

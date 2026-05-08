@@ -74,7 +74,7 @@ function FeatureCard({ icon, title, desc, delay }) {
     if (!el) return
     const obs = new IntersectionObserver(
       ([entry]) => setVisible(entry.isIntersecting),
-      { threshold: 0.15 }
+      { threshold: 0.3 }
     )
     obs.observe(el)
     return () => obs.disconnect()

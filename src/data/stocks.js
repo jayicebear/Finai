@@ -91,3 +91,76 @@ function aggregate(data, size) {
 export function aggregateWeekly(data)    { return aggregate(data, 5) }
 export function aggregateMonthly(data)   { return aggregate(data, 21) }
 export function aggregateYearly(data)    { return aggregate(data, 252) }
+
+const TIMEFRAME_MS = {
+  '1min':  60 * 1000,
+  '5min':  5 * 60 * 1000,
+  '15min': 15 * 60 * 1000,
+  '1hour': 60 * 60 * 1000,
+  '1day':  24 * 60 * 60 * 1000,
+}
+
+export function generateMockApiResponse(symbol, timeframe = '1min', bars = 100) {
+  const stock = stocks.find(s => s.id === symbol)
+  const basePrice = stock?.price ?? 100
+  const intervalMs = TIMEFRAME_MS[timeframe] ?? TIMEFRAME_MS['1min']
+
+  const now = Date.now()
+  const timeStart = now - intervalMs * bars
+  const timeEnd   = now
+
+  const t = [], o = [], h = [], l = [], c = [], v = [], vw = [], n = [], source = [], sourceDataset = []
+
+  let price = basePrice * 0.95
+
+  for (let i = 0; i < bars; i++) {
+    const timestamp = timeStart + intervalMs * i
+
+    // 가끔 null 포함 (실제 API처럼)
+    const hasData = Math.random() > 0.03
+
+    t.push(timestamp)
+
+    if (!hasData) {
+      o.push(null); h.push(null); l.push(null); c.push(null)
+      v.push(null); vw.push(null); n.push(null)
+      source.push(null); sourceDataset.push(null)
+      continue
+    }
+
+    const open  = parseFloat(price.toFixed(2))
+    const move  = (Math.random() - 0.47) * (basePrice * 0.004)
+    price       = Math.max(basePrice * 0.5, price + move)
+    const close = parseFloat(price.toFixed(2))
+    const vol   = basePrice * 0.002
+    const high  = parseFloat((Math.max(open, close) + Math.random() * vol).toFixed(2))
+    const low   = parseFloat((Math.min(open, close) - Math.random() * vol).toFixed(2))
+    const volume = Math.round(Math.random() * 20000 + 3000)
+    const vwap  = parseFloat(((open + high + low + close) / 4).toFixed(2))
+    const trades = Math.round(volume / 80)
+
+    o.push(open); h.push(high); l.push(low); c.push(close)
+    v.push(volume); vw.push(vwap); n.push(trades)
+    source.push('alpaca'); sourceDataset.push(null)
+  }
+
+  return {
+    ticker:       symbol,
+    assetClass:   'stock',
+    market:       'US',
+    currency:     'USD',
+    timeStart,
+    timeEnd,
+    timeframe,
+    adjustment:   null,
+    queryCount:   1,
+    resultsCount: bars,
+    barCount:     t.filter((_, i) => o[i] !== null).length,
+    truncated:    false,
+    status:       'OK',
+    request_id:   `md_mock_${symbol.toLowerCase()}`,
+    sources:      ['alpaca'],
+    sourceErrors: {},
+    results:      { t, o, h, l, c, v, vw, n, source, sourceDataset },
+  }
+}
