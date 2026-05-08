@@ -1,12 +1,20 @@
 export const stocks = [
-  { id: 'AAPL', name: 'Apple Inc.', price: 189.45, change: +1.23, changePct: +0.65 },
-  { id: 'TSLA', name: 'Tesla Inc.', price: 248.32, change: -3.11, changePct: -1.24 },
-  { id: 'NVDA', name: 'NVIDIA Corp.', price: 875.20, change: +12.40, changePct: +1.44 },
-  { id: 'MSFT', name: 'Microsoft', price: 415.60, change: +2.05, changePct: +0.50 },
-  { id: 'AMZN', name: 'Amazon', price: 182.30, change: -0.75, changePct: -0.41 },
-  { id: 'GOOGL', name: 'Alphabet', price: 172.88, change: +1.10, changePct: +0.64 },
-  { id: 'META', name: 'Meta Platforms', price: 512.44, change: +5.32, changePct: +1.05 },
-  { id: 'NFLX', name: 'Netflix', price: 628.90, change: -8.20, changePct: -1.29 },
+  { id: 'AAPL', name: 'Apple Inc.',     price: 189.45, change: +1.23,  changePct: +0.65,
+    phases: [{ w:0.3, drift:0.468, vol:1.0 }, { w:0.4, drift:0.462, vol:0.9 }, { w:0.3, drift:0.472, vol:1.1 }] },
+  { id: 'TSLA', name: 'Tesla Inc.',     price: 248.32, change: -3.11,  changePct: -1.24,
+    phases: [{ w:0.2, drift:0.455, vol:2.2 }, { w:0.3, drift:0.515, vol:2.5 }, { w:0.3, drift:0.460, vol:2.0 }, { w:0.2, drift:0.492, vol:1.8 }] },
+  { id: 'NVDA', name: 'NVIDIA Corp.',   price: 875.20, change: +12.40, changePct: +1.44,
+    phases: [{ w:0.3, drift:0.474, vol:1.2 }, { w:0.4, drift:0.448, vol:1.5 }, { w:0.3, drift:0.505, vol:1.8 }] },
+  { id: 'MSFT', name: 'Microsoft',      price: 415.60, change: +2.05,  changePct: +0.50,
+    phases: [{ w:0.5, drift:0.463, vol:0.8 }, { w:0.3, drift:0.472, vol:1.0 }, { w:0.2, drift:0.460, vol:0.9 }] },
+  { id: 'AMZN', name: 'Amazon',         price: 182.30, change: -0.75,  changePct: -0.41,
+    phases: [{ w:0.25, drift:0.471, vol:1.1 }, { w:0.35, drift:0.498, vol:1.3 }, { w:0.4, drift:0.460, vol:1.0 }] },
+  { id: 'GOOGL', name: 'Alphabet',      price: 172.88, change: +1.10,  changePct: +0.64,
+    phases: [{ w:0.4, drift:0.467, vol:1.0 }, { w:0.3, drift:0.482, vol:1.2 }, { w:0.3, drift:0.464, vol:0.9 }] },
+  { id: 'META', name: 'Meta Platforms', price: 512.44, change: +5.32,  changePct: +1.05,
+    phases: [{ w:0.25, drift:0.458, vol:1.2 }, { w:0.3, drift:0.535, vol:2.0 }, { w:0.45, drift:0.448, vol:1.4 }] },
+  { id: 'NFLX', name: 'Netflix',        price: 628.90, change: -8.20,  changePct: -1.29,
+    phases: [{ w:0.3, drift:0.460, vol:1.5 }, { w:0.4, drift:0.508, vol:1.8 }, { w:0.3, drift:0.476, vol:1.3 }] },
 ]
 
 const MA_NS = [5, 20, 60, 120]
@@ -27,7 +35,7 @@ function addMAs(data) {
 
 // 모듈 로드 시점에 모든 종목 × 모든 기간 데이터를 미리 계산
 const chartCache = Object.fromEntries(stocks.map(s => {
-  const daily = generateChartData(s.price)
+  const daily = generateChartData(s.price, 5, s.phases)
   return [s.id, {
     d: addMAs(daily),
     w: addMAs(aggregateWeekly(daily)),
@@ -40,22 +48,34 @@ export function getCachedChartData(stock, period = 'd') {
   return chartCache[stock.id][period]
 }
 
-export function generateChartData(basePrice, years = 5) {
+export function generateChartData(basePrice, years = 5, phases) {
   const data = []
   let price = basePrice * 0.45
   const now = new Date()
   const totalDays = years * 365
 
+  // 구간별 누적 경계 계산
+  const defaultPhases = [{ w: 1, drift: -0.47, vol: 1.0 }]
+  const resolvedPhases = phases ?? defaultPhases
+  let cumulative = 0
+  const boundaries = resolvedPhases.map(p => { cumulative += p.w; return cumulative })
+
+  let tradingDay = 0
   for (let i = totalDays - 1; i >= 0; i--) {
     const date = new Date(now)
     date.setDate(now.getDate() - i)
     if (date.getDay() === 0 || date.getDay() === 6) continue
 
+    // 현재 구간의 drift/volatility 결정
+    const progress = 1 - i / totalDays
+    const phaseIdx = boundaries.findIndex(b => progress <= b)
+    const phase = resolvedPhases[phaseIdx >= 0 ? phaseIdx : resolvedPhases.length - 1]
+
     const open  = parseFloat(price.toFixed(2))
-    const move  = (Math.random() - 0.47) * (basePrice * 0.016)
-    price       = Math.max(basePrice * 0.2, price + move)
+    const move  = (Math.random() - phase.drift) * (basePrice * 0.016 * phase.vol)
+    price       = Math.max(basePrice * 0.1, price + move)
     const close = parseFloat(price.toFixed(2))
-    const vol   = basePrice * 0.007
+    const vol   = basePrice * 0.007 * phase.vol
     const high  = parseFloat((Math.max(open, close) + Math.random() * vol).toFixed(2))
     const low   = parseFloat((Math.min(open, close) - Math.random() * vol).toFixed(2))
     const volume = Math.round((Math.random() * 8000000 + 500000) * (1 + Math.abs(move) / basePrice * 10))
@@ -65,6 +85,7 @@ export function generateChartData(basePrice, years = 5) {
     const time = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`
 
     data.push({ date: dateLabel, time, open, high, low, close, price: close, volume })
+    tradingDay++
   }
   return data
 }

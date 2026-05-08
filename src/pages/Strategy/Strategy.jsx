@@ -4,6 +4,7 @@ import IndicatorPreview from './IndicatorPreview'
 import styles from './Strategy.module.css'
 import { SIGNAL_FNS, combineSignals } from '../../services/indicators'
 import { runBacktest as execBacktest } from '../../services/backtest'
+import { optimizeParams, scanAllIndicators } from '../../services/optimizer'
 import { getCachedChartData, stocks } from '../../data/stocks'
 
 const STOCKS     = ['AAPL', 'TSLA', 'NVDA', 'MSFT', 'AMZN', 'GOOGL', 'META', 'NFLX']
@@ -227,6 +228,14 @@ export default function Strategy() {
   const [compareSelected, setCompareSelected] = useState(new Set())
   const [compareResults, setCompareResults]  = useState([])
 
+  const [optimizeModal,   setOptimizeModal]   = useState(false)
+  const [optimizeResults, setOptimizeResults] = useState([])
+  const [optimizing,      setOptimizing]      = useState(false)
+
+  const [scanModal,   setScanModal]   = useState(false)
+  const [scanResults, setScanResults] = useState([])
+  const [scanning,    setScanning]    = useState(false)
+
   function toggleIndicator(id) {
     setFocusedIndicator(id)
     setActiveIndicators(prev => {
@@ -271,6 +280,8 @@ export default function Strategy() {
   )
 
   function runComparison() {
+    setResults(null)
+    setPriceData(null)
     const compared = []
     let colorIdx = 0
     for (const s of savedList) {
@@ -290,6 +301,52 @@ export default function Strategy() {
     }
     setCompareResults(compared)
     setCompareModal(false)
+  }
+
+  function runOptimize() {
+    setOptimizing(true)
+    setOptimizeResults([])
+    setTimeout(() => {
+      try {
+        const stockInfo = stocks.find(s => s.id === stock)
+        const data      = getCachedChartData(stockInfo, 'd')
+        const results   = optimizeParams(data, activeIndicators, combineMode, {
+          capital, commission, slippage, stopLoss, takeProfit, maxHoldDays, maxPos,
+        })
+        setOptimizeResults(results)
+        setOptimizeModal(true)
+      } catch (e) { console.error(e) }
+      finally { setOptimizing(false) }
+    }, 50)
+  }
+
+  function runScan() {
+    setScanning(true)
+    setScanResults([])
+    setTimeout(() => {
+      try {
+        const stockInfo = stocks.find(s => s.id === stock)
+        const data      = getCachedChartData(stockInfo, 'd')
+        const results   = scanAllIndicators(data, {
+          capital, commission, slippage, stopLoss, takeProfit, maxHoldDays, maxPos,
+        })
+        setScanResults(results)
+        setScanModal(true)
+      } catch (e) { console.error(e) }
+      finally { setScanning(false) }
+    }, 50)
+  }
+
+  function applyOptimizedParams({ params, stopLoss, takeProfit, ids }) {
+    setIndParams(prev => ({ ...prev, ...params }))
+    setStopLoss(stopLoss)
+    setTakeProfit(takeProfit)
+    if (ids?.length) {
+      setActiveIndicators(new Set(ids))
+      setFocusedIndicator(ids[0])
+    }
+    setOptimizeModal(false)
+    setScanModal(false)
   }
 
   function confirmSave() {
@@ -334,6 +391,7 @@ export default function Strategy() {
 
   const minEq = useMemo(() => results ? Math.min(...results.curve.map(d => d.equity)) * 0.98 : 0, [results])
   const maxEq = useMemo(() => results ? Math.max(...results.curve.map(d => d.equity)) * 1.02 : 1, [results])
+
 
   const activeLabels   = [...activeIndicators].map(id => INDICATORS.find(i => i.id === id)?.label).filter(Boolean).join(' + ')
   const indicatorInfo  = INDICATOR_DETAILS.find(item => item.id === focusedIndicator)
@@ -384,6 +442,12 @@ export default function Strategy() {
             setSaveModal(true)
           }}>
             전략 저장
+          </button>
+          <button className={styles.saveStratBtn} onClick={runScan} disabled={scanning || running}>
+            {scanning ? '스캔 중…' : '🔍 전체 지표 스캔'}
+          </button>
+          <button className={styles.saveStratBtn} onClick={runOptimize} disabled={optimizing || running}>
+            {optimizing ? '최적화 중…' : '⚙ 파라미터 최적화'}
           </button>
           <button className={styles.runBtn} onClick={runBacktest} disabled={running}>
             {running ? '실행 중…' : '▶ 백테스트 실행'}
@@ -746,6 +810,102 @@ export default function Strategy() {
         </div>
       )}
 
+      {/* 전체 지표 스캔 결과 모달 */}
+      {scanModal && (
+        <div className={styles.modalOverlay} onClick={() => setScanModal(false)}>
+          <div className={styles.modal} style={{ width: 640 }} onClick={e => e.stopPropagation()}>
+            <h3 className={styles.modalTitle}>전체 지표 스캔 결과</h3>
+            <p className={styles.modalSub}>{stock} · 8개 지표 × 파라미터 × 손절/익절 — 수익률 기준</p>
+            <p className={styles.modalDisclaimer}>⚠ 속도를 위해 대표 파라미터 조합만 탐색합니다. 모든 경우의 수를 확인하지는 않아요.</p>
+            <div className={styles.optResultList}>
+              {scanResults.map((r, i) => (
+                <div key={r.id} className={`${styles.optResultItem} ${i === 0 ? styles.optResultBest : ''}`}>
+                  <div className={styles.optResultRow1}>
+                    <span className={styles.optRank}>#{i + 1}</span>
+                    <div className={styles.optParams}>
+                      {r.ids.map(id => (
+                        <div key={id} className={styles.optParamGroup}>
+                          <span className={styles.optIndLabel}>{id.toUpperCase()}</span>
+                          {Object.entries(r.params[id]).map(([k, v]) => (
+                            <span key={k} className={styles.optParam}>{k}: <strong>{v}</strong></span>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className={styles.optResultRow2}>
+                    <div className={styles.optMetrics}>
+                      <span className={`${styles.optMetric} ${r.totalReturn >= 0 ? styles.metricUp : styles.metricDown}`} style={{ fontWeight: 800 }}>
+                        {r.totalReturn >= 0 ? '+' : ''}{r.totalReturn}%
+                      </span>
+                      <span className={styles.optMetric}>승률 {r.winRate}%</span>
+                      <span className={styles.optMetric}>Sharpe {r.sharpe}</span>
+                      <span className={styles.optMetric}>{r.trades}건</span>
+                      <span className={styles.optMetric} style={{ color: '#dc2626' }}>SL {r.stopLoss}%</span>
+                      <span className={styles.optMetric} style={{ color: '#16a34a' }}>TP {r.takeProfit}%</span>
+                    </div>
+                    <button className={styles.optApplyBtn} onClick={() => applyOptimizedParams(r)}>적용</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className={styles.modalBtns} style={{ marginTop: 20 }}>
+              <button className={styles.modalCancelBtn} onClick={() => setScanModal(false)}>닫기</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 파라미터 최적화 결과 모달 */}
+      {optimizeModal && (
+        <div className={styles.modalOverlay} onClick={() => setOptimizeModal(false)}>
+          <div className={styles.modal} style={{ width: 600 }} onClick={e => e.stopPropagation()}>
+            <h3 className={styles.modalTitle}>파라미터 최적화 결과</h3>
+            <p className={styles.modalSub}>{stock} · {activeLabels} · 수익률 기준 상위 5개</p>
+            <p className={styles.modalDisclaimer}>⚠ 속도를 위해 대표 파라미터 조합만 탐색합니다. 모든 경우의 수를 확인하지는 않아요.</p>
+            {optimizeResults.length === 0 ? (
+              <p className={styles.modalEmpty}>유효한 결과가 없어요. 지표나 기간을 바꿔보세요.</p>
+            ) : (
+              <div className={styles.optResultList}>
+                {optimizeResults.map((r, i) => (
+                <div key={i} className={styles.optResultItem}>
+                  <div className={styles.optResultRow1}>
+                    <span className={styles.optRank}>#{i + 1}</span>
+                    <div className={styles.optParams}>
+                      {Object.entries(r.params).map(([indId, p]) => (
+                        <div key={indId} className={styles.optParamGroup}>
+                          <span className={styles.optIndLabel}>{indId.toUpperCase()}</span>
+                          {Object.entries(p).map(([k, v]) => (
+                            <span key={k} className={styles.optParam}>{k}: <strong>{v}</strong></span>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className={styles.optResultRow2}>
+                    <div className={styles.optMetrics}>
+                      <span className={`${styles.optMetric} ${r.totalReturn >= 0 ? styles.metricUp : styles.metricDown}`} style={{ fontWeight: 800 }}>
+                        {r.totalReturn >= 0 ? '+' : ''}{r.totalReturn}%
+                      </span>
+                      <span className={styles.optMetric}>승률 {r.winRate}%</span>
+                      <span className={styles.optMetric}>Sharpe {r.sharpe}</span>
+                      <span className={styles.optMetric}>{r.trades}건</span>
+                      <span className={styles.optMetric} style={{ color: '#dc2626' }}>SL {r.stopLoss}%</span>
+                      <span className={styles.optMetric} style={{ color: '#16a34a' }}>TP {r.takeProfit}%</span>
+                    </div>
+                    <button className={styles.optApplyBtn} onClick={() => applyOptimizedParams(r)}>적용</button>
+                  </div>
+                </div>
+              ))}
+              </div>
+            )}
+            <div className={styles.modalBtns} style={{ marginTop: 20 }}>
+              <button className={styles.modalCancelBtn} onClick={() => setOptimizeModal(false)}>닫기</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 전략 저장 모달 */}
       {saveModal && (
         <div className={styles.modalOverlay} onClick={() => setSaveModal(false)}>
@@ -844,6 +1004,7 @@ export default function Strategy() {
               </LineChart>
             </ResponsiveContainer>
           </div>
+
           {priceData && entrySet && exitSet && (
             <div className={styles.chartWrap}>
               <div className={styles.chartLabel}>

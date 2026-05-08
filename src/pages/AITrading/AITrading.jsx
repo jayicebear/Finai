@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { AI_MODELS, STRATEGIES, RISK_LEVELS, generateSignal } from '../../data/aiStrategies'
-import { stocks, generateChartData } from '../../data/stocks'
+import { stocks, getCachedChartData } from '../../data/stocks'
 import { usePortfolio } from '../../context/PortfolioContext'
 import StrategyPanel from './StrategyPanel'
 import AIChartPanel from './AIChartPanel'
@@ -136,7 +136,7 @@ function AITrading() {
     clearTimeout(thinkRef.current)
   }, [])
 
-  const chartData = generateChartData(selectedStock.price)
+  const chartData = getCachedChartData(selectedStock, 'd')
 
   // 최근 실행을 차트 데이터 끝 쪽에 마킹
   const markedChartData = chartData.map((d, i) => {
