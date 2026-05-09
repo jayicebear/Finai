@@ -14,6 +14,7 @@ import Strategy from './pages/Strategy/Strategy'
 import Graph from './pages/Graph/Graph'
 import Analysis from './pages/Analysis/Analysis'
 import Screener from './pages/Screener/Screener'
+import ChartGame from './pages/ChartGame/ChartGame'
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
           <Route path="/analysis" element={<Analysis />} />
           <Route path="/screener" element={<Screener />} />
           <Route path="/graph"   element={<Graph />} />
+          <Route path="/chart-game" element={<ChartGame />} />
         </Routes>
       </PortfolioProvider>
     </BrowserRouter>

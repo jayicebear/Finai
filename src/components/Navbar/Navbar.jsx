@@ -30,6 +30,7 @@ function Navbar() {
         <li><NavLink to="/graph"      className={navClass} onClick={() => setOpen(false)}>Graph</NavLink></li>
         <li><NavLink to="/analysis"   className={navClass} onClick={() => setOpen(false)}>Analysis</NavLink></li>
         <li><NavLink to="/feed"       className={navClass} onClick={() => setOpen(false)}>Feed</NavLink></li>
+        <li><NavLink to="/chart-game" className={navClass} onClick={() => setOpen(false)}>Chart Game</NavLink></li>
       </ul>
 
       <div className={`${styles.auth} ${open ? styles.authOpen : ''}`}>

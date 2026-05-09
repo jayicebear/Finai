@@ -1,0 +1,527 @@
+/* ── 공통 ── */
+* { box-sizing: border-box; }
+
+/* ── 게임 레이아웃 ── */
+.page {
+  display: flex;
+  height: calc(100vh - 60px);
+  background: #f0ede8;
+  overflow: hidden;
+  font-family: system-ui, sans-serif;
+}
+
+.chartArea {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 0 12px 16px;
+  min-width: 0;
+}
+
+.progressWrap {
+  position: relative;
+  height: 6px;
+  background: #e8e4de;
+  border-radius: 99px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  border-radius: 99px;
+  transition: width 0.3s ease;
+}
+
+.progressLabel {
+  position: absolute;
+  right: 0;
+  top: -16px;
+  font-size: 10px;
+  color: #bbb;
+  font-family: system-ui, sans-serif;
+}
+
+.chart {
+  flex: 1;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+
+/* ── MA 토글 ── */
+.maControls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.maLabel { font-size: 11px; color: #bbb; }
+
+.maBtn {
+  padding: 3px 9px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background: #fff;
+  font-size: 11px;
+  font-family: system-ui, sans-serif;
+  color: #aaa;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.maBtn:hover { border-color: #bbb; color: #555; }
+.maActive { font-weight: 600; }
+
+.maDivider {
+  width: 1px;
+  height: 16px;
+  background: #ddd;
+  margin: 0 2px;
+}
+
+/* ── 사이드바 ── */
+.sidebar {
+  width: 270px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  overflow-y: auto;
+}
+
+/* ── 턴 행 ── */
+.turnRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  border-radius: 10px;
+  padding: 10px 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.turnBadge { display: flex; align-items: baseline; gap: 3px; }
+.turnNum { font-size: 24px; font-weight: 700; color: #1a1a2e; font-family: system-ui, sans-serif; }
+.turnSub { font-size: 12px; color: #bbb; }
+
+.nextBtn {
+  padding: 8px 14px;
+  background: #1a1a2e;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.nextBtn:hover { background: #2d2d4e; }
+
+/* ── 주문 패널 (Trading 페이지 스타일) ── */
+.orderPanel {
+  background: #fff;
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+/* 탭 */
+.tabs {
+  display: flex;
+  background: #f5f2ed;
+  border-radius: 10px;
+  padding: 3px;
+  gap: 3px;
+}
+
+.tab {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+  background: transparent;
+  color: #aaa;
+  transition: all 0.15s;
+}
+
+.tabBuyActive {
+  background: #fff;
+  color: #dc2626;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.tabSellActive {
+  background: #fff;
+  color: #3b82f6;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+/* 정보 박스 */
+.infoBox {
+  background: #faf8f5;
+  border: 1px solid #ece8e2;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.infoLbl { font-size: 11px; color: #aaa; font-family: system-ui, sans-serif; }
+.infoVal { font-size: 12px; font-weight: 700; color: #1a1a2e; font-family: system-ui, sans-serif; }
+
+/* % 버튼 */
+.pctRow { display: flex; gap: 5px; }
+
+.pctBtn {
+  flex: 1;
+  padding: 6px 0;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+  border: 1.5px solid;
+  transition: all 0.12s;
+  background: transparent;
+}
+.pctBtn:disabled { opacity: 0.35; cursor: not-allowed; }
+.pctBtnBuy  { border-color: #fca5a5; color: #dc2626; }
+.pctBtnBuy:hover:not(:disabled)  { background: #fef2f2; }
+.pctBtnSell { border-color: #93c5fd; color: #3b82f6; }
+.pctBtnSell:hover:not(:disabled) { background: #eff6ff; }
+
+/* 수량 */
+.qtyRow { display: flex; align-items: center; gap: 6px; }
+
+.qtyBtn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #e5e2dd;
+  background: #faf8f5;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  font-family: system-ui, sans-serif;
+  color: #1a1a2e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.12s;
+}
+.qtyBtn:hover { background: #ece9e4; }
+
+.qtyInput {
+  flex: 1;
+  height: 32px;
+  text-align: center;
+  border: 1px solid #e5e2dd;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: system-ui, sans-serif;
+  font-weight: 700;
+  background: #fff;
+  color: #1a1a2e;
+  outline: none;
+}
+.qtyInput::-webkit-inner-spin-button,
+.qtyInput::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+/* 주문금액 */
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #faf8f5;
+  border: 1px solid #ece8e2;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+.totalLabel { font-size: 11px; color: #aaa; font-family: system-ui, sans-serif; }
+.totalValue { font-size: 14px; font-weight: 700; color: #1a1a2e; font-family: system-ui, sans-serif; }
+
+/* 주문 버튼 */
+.orderBtn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+  color: #fff;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.orderBtn:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+.orderBtn:active:not(:disabled) { transform: translateY(0); }
+.orderBtn:disabled { opacity: 0.38; cursor: not-allowed; }
+.orderBtnBuy  { background: #dc2626; }
+.orderBtnSell { background: #3b82f6; }
+
+/* ── 게임 현황 ── */
+.statusBox {
+  background: #fff;
+  border-radius: 10px;
+  padding: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.statusHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+.initLabel { font-size: 11px; color: #bbb; font-weight: 400; }
+
+.assetRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.assetLabel { font-size: 11px; color: #aaa; }
+.assetRight { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.assetValue { font-size: 18px; font-weight: 700; color: #1a1a2e; }
+.assetPct   { font-size: 12px; font-weight: 600; }
+
+.statusDivider { height: 1px; background: #f0ede8; }
+
+.statusGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.statusCell { display: flex; flex-direction: column; gap: 2px; }
+.statusLabel { font-size: 10px; color: #bbb; }
+.statusValue { font-size: 12px; font-weight: 600; color: #1a1a2e; }
+
+/* ── 매매내역 ── */
+.tradeHistory {
+  background: #fff;
+  border-radius: 10px;
+  padding: 14px;
+  flex: 1;
+  overflow-y: auto;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  min-height: 80px;
+}
+
+.tradeHistoryHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 8px;
+}
+.tradeCnt { font-size: 11px; color: #bbb; font-weight: 400; }
+
+.noTrades { font-size: 12px; color: #ccc; text-align: center; padding: 10px 0; }
+
+.tradeList { display: flex; flex-direction: column; gap: 4px; }
+
+.tradeItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  padding: 5px 0;
+  border-bottom: 1px solid #f5f2ed;
+}
+
+.buyTag, .sellTag {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.buyTag  { background: #fee2e2; color: #dc2626; }
+.sellTag { background: #dbeafe; color: #2563eb; }
+
+.tradeQty   { color: #444; }
+.tradePrice { color: #666; flex: 1; }
+.tradeTurn  { color: #ccc; font-size: 10px; flex-shrink: 0; }
+
+/* ── 색상 ── */
+.up   { color: #dc2626; }
+.down { color: #3b82f6; }
+
+/* ── 셋업 화면 ── */
+.setupPage {
+  font-family: system-ui, sans-serif;
+  min-height: calc(100vh - 60px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  background: #f0ede8;
+  padding: 40px 20px;
+}
+
+.setupTitle {
+  font-size: 30px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.setupDesc {
+  font-size: 14px;
+  color: #888;
+  text-align: center;
+  line-height: 1.7;
+}
+
+.setupSection { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.setupLabel { font-size: 13px; font-weight: 600; color: #555; }
+
+.balanceGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.balanceBtn {
+  padding: 14px 28px;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.balanceBtn:hover { border-color: #1a1a2e; color: #1a1a2e; }
+.balanceBtnActive { border-color: #1a1a2e; background: #1a1a2e; color: #fff; }
+
+.startBtn {
+  padding: 15px 60px;
+  background: #1a1a2e;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.startBtn:hover { background: #2d2d4e; }
+
+/* ── 결과 화면 ── */
+.resultPage {
+  font-family: system-ui, sans-serif;
+  min-height: calc(100vh - 60px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  background: #f0ede8;
+  padding: 40px 20px;
+}
+
+.resultTitle {
+  font-size: 26px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.resultCard {
+  background: #fff;
+  border-radius: 14px;
+  padding: 24px 32px;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.resultStock { font-size: 12px; color: #bbb; text-align: center; }
+
+.resultReturn {
+  font-size: 38px;
+  font-weight: 700;
+  text-align: center;
+  padding: 8px 0;
+}
+
+.resultRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #555;
+  padding: 5px 0;
+  border-bottom: 1px solid #f5f2ed;
+}
+
+.resultTrades { width: 100%; max-width: 380px; }
+.resultTrades h3 { font-size: 13px; color: #888; margin-bottom: 8px; font-weight: 600; }
+
+.tradeTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.tradeTable th {
+  padding: 8px 12px;
+  text-align: left;
+  background: #f8f7f5;
+  color: #aaa;
+  font-weight: 600;
+  font-size: 11px;
+}
+.tradeTable td {
+  padding: 7px 12px;
+  border-top: 1px solid #f5f2ed;
+  color: #444;
+}
+
+.retryBtn {
+  padding: 13px 50px;
+  background: #1a1a2e;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.retryBtn:hover { background: #2d2d4e; }
