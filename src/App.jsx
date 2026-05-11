@@ -21,22 +21,24 @@ function App() {
   return (
     <BrowserRouter basename="/Finai">
       <PortfolioProvider>
-        <Navbar />
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/trading" element={<Trading />} />
-          <Route path="/ai-trading" element={<AITrading />} />
-          <Route path="/portfolio" element={<Portfolio />} />
-          <Route path="/feed" element={<Feed />} />
-          <Route path="/history" element={<History />} />
-          <Route path="/investors" element={<Investors />} />
-          <Route path="/algorithm" element={<Algorithm />} />
-          <Route path="/strategy" element={<Strategy />} />
-          <Route path="/analysis" element={<Analysis />} />
-          <Route path="/screener" element={<Screener />} />
-          <Route path="/graph"   element={<Graph />} />
-          <Route path="/chart-game" element={<ChartGame />} />
-        </Routes>
+        <StrategyProvider>
+          <Navbar />
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/trading" element={<Trading />} />
+            <Route path="/ai-trading" element={<AITrading />} />
+            <Route path="/portfolio" element={<Portfolio />} />
+            <Route path="/feed" element={<Feed />} />
+            <Route path="/history" element={<History />} />
+            <Route path="/investors" element={<Investors />} />
+            <Route path="/algorithm" element={<Algorithm />} />
+            <Route path="/strategy" element={<Strategy />} />
+            <Route path="/analysis" element={<Analysis />} />
+            <Route path="/screener" element={<Screener />} />
+            <Route path="/graph"   element={<Graph />} />
+            <Route path="/chart-game" element={<ChartGame />} />
+          </Routes>
+        </StrategyProvider>
       </PortfolioProvider>
     </BrowserRouter>
   )
