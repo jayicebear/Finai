@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './index.css'
 import { PortfolioProvider } from './context/PortfolioContext'
+import { StrategyProvider } from './context/StrategyContext'
 import Navbar from './components/Navbar/Navbar'
 import Landing from './pages/Landing/Landing'
 import Trading from './pages/Trading/Trading'

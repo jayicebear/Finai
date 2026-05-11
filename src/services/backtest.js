@@ -15,8 +15,9 @@ export function runBacktest(data, signals, config) {
     maxPos      = 100,   // % of equity per trade
   } = config
 
-  let cash     = capital
-  let position = null   // { entryPrice, entryIdx, shares, cost }
+  let cash        = capital
+  let position    = null
+  let totalCommission = 0
   const curve  = [{ t: 0, equity: capital, date: data[0]?.time ?? '' }]
   const trades = []
 
@@ -24,16 +25,21 @@ export function runBacktest(data, signals, config) {
     const slippedPrice = price * (1 + slippage / 100)
     const invest       = cash * (maxPos / 100)
     const cost         = invest
-    const shares       = (invest * (1 - commission / 100)) / slippedPrice
+    const fee          = invest * (commission / 100)
+    const shares       = (invest - fee) / slippedPrice
     cash -= invest
+    totalCommission += fee
     position = { entryPrice: slippedPrice, entryIdx: i, shares, cost }
   }
 
   const exit = (i, price, reason) => {
     const slippedPrice = price * (1 - slippage / 100)
-    const proceeds     = position.shares * slippedPrice * (1 - commission / 100)
+    const gross        = position.shares * slippedPrice
+    const fee          = gross * (commission / 100)
+    const proceeds     = gross - fee
     const pnl          = proceeds - position.cost
     cash += proceeds
+    totalCommission += fee
     trades.push({
       entryIdx:   position.entryIdx,
       exitIdx:    i,
@@ -73,10 +79,10 @@ export function runBacktest(data, signals, config) {
     curve[curve.length - 1].equity = Math.round(cash)
   }
 
-  return calcMetrics(capital, cash, trades, curve)
+  return calcMetrics(capital, cash, trades, curve, totalCommission)
 }
 
-function calcMetrics(capital, finalCash, trades, curve) {
+function calcMetrics(capital, finalCash, trades, curve, totalCommission) {
   const finalEq     = curve[curve.length - 1].equity
   const totalReturn = parseFloat(((finalEq - capital) / capital * 100).toFixed(2))
   const tradeCount  = trades.length
@@ -102,6 +108,24 @@ function calcMetrics(capital, finalCash, trades, curve) {
   const stdDev = Math.sqrt(returns.reduce((s, r) => s + (r - mean) ** 2, 0) / (returns.length || 1))
   const sharpe = stdDev > 0 ? parseFloat(((mean / stdDev) * Math.sqrt(252)).toFixed(2)) : 0
 
+  // CAGR — 거래일 기준 연율화
+  const years = (curve.length - 1) / 252
+  const cagr  = years > 0
+    ? parseFloat((((finalEq / capital) ** (1 / years) - 1) * 100).toFixed(2))
+    : 0
+
+  // 손익비
+  const winners = trades.filter(t => t.win)
+  const losers  = trades.filter(t => !t.win)
+  const avgWin  = winners.length > 0 ? winners.reduce((s, t) => s + t.pnl, 0) / winners.length : 0
+  const avgLoss = losers.length  > 0 ? Math.abs(losers.reduce((s, t) => s + t.pnl, 0) / losers.length) : 0
+  const profitFactor = avgLoss > 0 ? parseFloat((avgWin / avgLoss).toFixed(2)) : null
+
+  // 평균 보유 기간 (거래일)
+  const avgHoldDays = tradeCount > 0
+    ? parseFloat((trades.reduce((s, t) => s + (t.exitIdx - t.entryIdx), 0) / tradeCount).toFixed(1))
+    : 0
+
   return {
     trades:      tradeCount,
     winRate,
@@ -111,5 +135,9 @@ function calcMetrics(capital, finalCash, trades, curve) {
     curve,
     finalEq,
     tradeLog:    trades,
+    cagr,
+    totalCommission: parseFloat(totalCommission.toFixed(2)),
+    profitFactor,
+    avgHoldDays,
   }
 }

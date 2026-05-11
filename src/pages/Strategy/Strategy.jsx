@@ -1,6 +1,8 @@
-import { useState, useMemo, useRef } from 'react'
+import { useMemo } from 'react'
+import { useStrategy } from '../../context/StrategyContext'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 import IndicatorPreview from './IndicatorPreview'
+import BacktestChart from './BacktestChart'
 import styles from './Strategy.module.css'
 import { SIGNAL_FNS, combineSignals } from '../../services/indicators'
 import { runBacktest as execBacktest } from '../../services/backtest'
@@ -80,12 +82,6 @@ const INDICATOR_DETAILS = [
   },
 ]
 
-const DEFAULT_PRIORITIES = [
-  { id: 'stoploss',   label: '손절',        sub: 'Stop Loss',       color: '#dc2626', bg: '#fef2f2' },
-  { id: 'takeprofit', label: '익절',        sub: 'Take Profit',     color: '#16a34a', bg: '#f0fdf4' },
-  { id: 'signal',     label: '지표 신호 역전', sub: 'Signal Reversal', color: '#2563eb', bg: '#eff6ff' },
-  { id: 'time',       label: '시간 제한 만료', sub: 'Time Expiry',   color: '#d97706', bg: '#fffbeb' },
-]
 
 const VOLUME_FILTERS  = ['없음', '평균 거래량 1.5배 이상', '평균 거래량 2배 이상']
 const TREND_FILTERS   = ['없음', '200일 MA 위 (상승 추세)', '200일 MA 아래 (하락 추세)']
@@ -176,65 +172,25 @@ function IndicatorParams({ indicator, params, setParams }) {
 }
 
 export default function Strategy() {
-  const [capital,    setCapital]    = useState(10000)
-  const [commission, setCommission] = useState(0.1)
-  const [slippage,   setSlippage]   = useState(0)
-  const [startDate,  setStartDate]  = useState('2023-01-01')
-  const [endDate,    setEndDate]    = useState('2024-12-31')
-  const [timeframe,  setTimeframe]  = useState('1D')
-  const [stock,      setStock]      = useState('AAPL')
-
-  const [activeIndicators, setActiveIndicators] = useState(new Set(['ma']))
-  const [focusedIndicator, setFocusedIndicator] = useState('ma')
-  const [combineMode, setCombineMode] = useState('AND')
-  const [indParams, setIndParams] = useState({
-    ma:         { fast: 5,  slow: 20, offset: 0 },
-    rsi:        { period: 14, oversold: 30, overbought: 70 },
-    macd:       { fast: 12, slow: 26, signal: 9 },
-    bollinger:  { period: 20, std: 2, offset: 0 },
-    momentum:   { period: 10, threshold: 5, offset: 0 },
-    stochastic: { kPeriod: 14, dPeriod: 3, smooth: 3 },
-    vwap:       { deviation: 1, bands: 2, offset: 0 },
-    ichimoku:   { tenkan: 9, kijun: 26, senkou: 52 },
-  })
-  const [maxPos,        setMaxPos]        = useState(20)
-  const [volumeFilter,  setVolumeFilter]  = useState('없음')
-  const [trendFilter,   setTrendFilter]   = useState('없음')
-  const [candlePattern, setCandlePattern] = useState('없음')
-  const [useEntryTime,  setUseEntryTime]  = useState(false)
-  const [entryTimeFrom, setEntryTimeFrom] = useState('09:00')
-  const [entryTimeTo,   setEntryTimeTo]   = useState('11:00')
-
-  const [stopLoss,    setStopLoss]    = useState(5)
-  const [takeProfit,  setTakeProfit]  = useState(10)
-  const [trailingStop, setTrailingStop] = useState(false)
-  const [maxHoldDays, setMaxHoldDays] = useState(10)
-  const [useExitTime, setUseExitTime] = useState(false)
-  const [priorities,  setPriorities]  = useState(DEFAULT_PRIORITIES)
-  const dragIndex = useRef(null)
-
-  const [entryEnabled, setEntryEnabled] = useState(true)
-  const [exitEnabled,  setExitEnabled]  = useState(true)
-  const [results,   setResults]   = useState(null)
-  const [running,   setRunning]   = useState(false)
-  const [priceData, setPriceData] = useState(null)
-  const [btError,   setBtError]   = useState(null)
-
-  const [saveModal,      setSaveModal]      = useState(false)
-  const [stratName,      setStratName]      = useState('')
-  const [loadModal,      setLoadModal]      = useState(false)
-  const [savedList,      setSavedList]      = useState(() => JSON.parse(localStorage.getItem('my_strategies') || '[]'))
-  const [compareModal,   setCompareModal]   = useState(false)
-  const [compareSelected, setCompareSelected] = useState(new Set())
-  const [compareResults, setCompareResults]  = useState([])
-
-  const [optimizeModal,   setOptimizeModal]   = useState(false)
-  const [optimizeResults, setOptimizeResults] = useState([])
-  const [optimizing,      setOptimizing]      = useState(false)
-
-  const [scanModal,   setScanModal]   = useState(false)
-  const [scanResults, setScanResults] = useState([])
-  const [scanning,    setScanning]    = useState(false)
+  const {
+    capital, setCapital, commission, setCommission, slippage, setSlippage,
+    startDate, setStartDate, endDate, setEndDate, timeframe, setTimeframe, stock, setStock,
+    activeIndicators, setActiveIndicators, focusedIndicator, setFocusedIndicator,
+    combineMode, setCombineMode, indParams, setIndParams,
+    maxPos, setMaxPos, volumeFilter, setVolumeFilter, trendFilter, setTrendFilter,
+    candlePattern, setCandlePattern, useEntryTime, setUseEntryTime,
+    entryTimeFrom, setEntryTimeFrom, entryTimeTo, setEntryTimeTo,
+    stopLoss, setStopLoss, takeProfit, setTakeProfit, trailingStop, setTrailingStop,
+    maxHoldDays, setMaxHoldDays, useExitTime, setUseExitTime, priorities, setPriorities,
+    dragIndex,
+    entryEnabled, setEntryEnabled, exitEnabled, setExitEnabled,
+    results, setResults, running, setRunning, priceData, setPriceData, btError, setBtError,
+    saveModal, setSaveModal, stratName, setStratName, loadModal, setLoadModal,
+    savedList, setSavedList, compareModal, setCompareModal,
+    compareSelected, setCompareSelected, compareResults, setCompareResults,
+    optimizeModal, setOptimizeModal, optimizeResults, setOptimizeResults, optimizing, setOptimizing,
+    scanModal, setScanModal, scanResults, setScanResults, scanning, setScanning,
+  } = useStrategy()
 
   function toggleIndicator(id) {
     setFocusedIndicator(id)
@@ -253,7 +209,14 @@ export default function Strategy() {
     setTimeout(() => {
       try {
         const stockInfo  = stocks.find(s => s.id === stock)
-        const data       = getCachedChartData(stockInfo, 'd')
+        const rawData    = getCachedChartData(stockInfo, 'd')
+        const start      = new Date(startDate)
+        const end        = new Date(endDate)
+        const data       = rawData.filter(d => {
+          const t = new Date(d.time)
+          return t >= start && t <= end
+        })
+        if (data.length === 0) throw new Error('선택한 기간에 데이터가 없어요. 날짜 범위를 확인해주세요.')
         const allSignals = [...activeIndicators].map(id => SIGNAL_FNS[id](data, indParams[id]))
         const signals    = allSignals.length === 1 ? allSignals[0] : combineSignals(allSignals, combineMode)
         const result     = execBacktest(data, signals, {
@@ -392,12 +355,24 @@ export default function Strategy() {
   const minEq = useMemo(() => results ? Math.min(...results.curve.map(d => d.equity)) * 0.98 : 0, [results])
   const maxEq = useMemo(() => results ? Math.max(...results.curve.map(d => d.equity)) * 1.02 : 1, [results])
 
+  const splitCurve = useMemo(() => {
+    if (!results) return []
+    return results.curve.map((d, i, arr) => {
+      const isUp   = d.equity >= capital
+      const prev   = arr[i - 1]
+      const cross  = prev && (prev.equity >= capital) !== isUp
+      return {
+        ...d,
+        equityUp:   (isUp  || cross) ? d.equity : null,
+        equityDown: (!isUp || cross) ? d.equity : null,
+      }
+    })
+  }, [results, capital])
+
 
   const activeLabels   = [...activeIndicators].map(id => INDICATORS.find(i => i.id === id)?.label).filter(Boolean).join(' + ')
   const indicatorInfo  = INDICATOR_DETAILS.find(item => item.id === focusedIndicator)
 
-  const entrySet = useMemo(() => results ? new Set(results.tradeLog.map(t => t.entryIdx)) : null, [results])
-  const exitSet  = useMemo(() => results ? new Set(results.tradeLog.map(t => t.exitIdx))  : null, [results])
 
   const compareOnlyCurve = useMemo(() => {
     if (!compareResults.length) return null
@@ -973,13 +948,29 @@ export default function Strategy() {
               <span className={styles.metricLbl}>Sharpe</span>
               <span className={styles.metricVal}>{results.sharpe}</span>
             </div>
+            <div className={`${styles.metric} ${results.cagr >= 0 ? styles.metricUp : styles.metricDown}`}>
+              <span className={styles.metricLbl}>연평균 수익률</span>
+              <span className={styles.metricVal}>{results.cagr >= 0 ? '+' : ''}{results.cagr}%</span>
+            </div>
+            <div className={styles.metric}>
+              <span className={styles.metricLbl}>총 수수료</span>
+              <span className={styles.metricVal}>${results.totalCommission.toLocaleString()}</span>
+            </div>
+            <div className={styles.metric}>
+              <span className={styles.metricLbl}>손익비</span>
+              <span className={styles.metricVal}>{results.profitFactor !== null ? results.profitFactor : '-'}</span>
+            </div>
+            <div className={styles.metric}>
+              <span className={styles.metricLbl}>평균 보유</span>
+              <span className={styles.metricVal}>{results.avgHoldDays}일</span>
+            </div>
           </div>
           <div className={styles.chartWrap} style={{ marginBottom: 16 }}>
             <div className={styles.chartLabel}>자산 곡선 (Equity Curve)</div>
             <ResponsiveContainer width="100%" height={220}>
-              <LineChart data={results.curve} margin={{ top: 8, right: 24, left: 0, bottom: 24 }}>
+              <LineChart data={splitCurve} margin={{ top: 8, right: 24, left: 0, bottom: 24 }}>
                 <XAxis dataKey="date"
-                  interval={Math.floor(results.curve.length / 6)}
+                  interval={Math.floor(splitCurve.length / 6)}
                   tick={{ fontSize: 11, fill: '#bbb', fontFamily: 'system-ui' }}
                   tickLine={false} axisLine={false}
                   tickFormatter={v => {
@@ -995,46 +986,94 @@ export default function Strategy() {
                   width={52} orientation="right" />
                 <Tooltip
                   contentStyle={{ background: '#fff', border: '1px solid #eee', borderRadius: 8, fontSize: 11 }}
-                  formatter={v => [`$${v?.toLocaleString()}`, activeLabels]}
+                  formatter={(v, name) => v != null ? [`$${v.toLocaleString()}`, activeLabels] : [null]}
                   labelFormatter={v => v} />
                 <ReferenceLine y={capital} stroke="#aaa" strokeDasharray="4 2" />
-                <Line dataKey="equity" name="equity"
-                  stroke={results.totalReturn >= 0 ? '#16a34a' : '#dc2626'}
-                  strokeWidth={2} dot={false} isAnimationActive={false} />
+                <Line dataKey="equityUp"   stroke="#dc2626" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls={false} />
+                <Line dataKey="equityDown" stroke="#3b82f6" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
 
-          {priceData && entrySet && exitSet && (
+          {priceData && results.tradeLog && (
             <div className={styles.chartWrap}>
               <div className={styles.chartLabel}>
                 주가 & 매매 시점
                 <span className={styles.tradeLegend}>
-                  <span className={styles.legendBuy}>● 매수</span>
-                  <span className={styles.legendSell}>● 매도</span>
+                  <span className={styles.legendBuy}>▲ BUY</span>
+                  <span style={{ fontSize: 12 }}>▼ SELL — <span style={{ color: '#3b82f6' }}>손절(파랑)</span> · <span style={{ color: '#dc2626' }}>익절(빨강)</span></span>
                 </span>
               </div>
-              <ResponsiveContainer width="100%" height={220}>
-                <LineChart data={priceData} margin={{ top: 8, right: 24, left: 0, bottom: 24 }}>
-                  <XAxis dataKey="time" interval={Math.floor(priceData.length / 6)}
-                    tick={{ fontSize: 11, fill: '#bbb', fontFamily: 'system-ui' }}
-                    tickLine={false} axisLine={false}
-                    tickFormatter={v => { if (!v) return ''; const d = new Date(v); return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}` }}
-                  />
-                  <YAxis tick={{ fontSize: 11, fill: '#aaa', fontFamily: 'system-ui' }}
-                    tickLine={false} axisLine={false} tickFormatter={v => `$${v}`}
-                    width={52} orientation="right" domain={['auto', 'auto']} />
-                  <Tooltip contentStyle={{ background: '#fff', border: '1px solid #eee', borderRadius: 8, fontSize: 11 }}
-                    formatter={v => [`$${v?.toLocaleString()}`, '종가']} labelFormatter={v => v} />
-                  <Line dataKey="close" stroke="#94a3b8" strokeWidth={1.5} isAnimationActive={false}
-                    dot={(props) => {
-                      const { cx, cy, index } = props
-                      if (entrySet.has(index)) return <circle key={`b${index}`} cx={cx} cy={cy} r={5} fill="#16a34a" stroke="#fff" strokeWidth={1.5} />
-                      if (exitSet.has(index))  return <circle key={`s${index}`} cx={cx} cy={cy} r={5} fill="#dc2626" stroke="#fff" strokeWidth={1.5} />
-                      return <g key={`n${index}`} />
-                    }} />
-                </LineChart>
-              </ResponsiveContainer>
+              <BacktestChart data={priceData} tradeLog={results.tradeLog} />
+            </div>
+          )}
+
+          {priceData && results.tradeLog?.length > 0 && (
+            <div className={styles.tradeTableWrap}>
+              <div className={styles.tradeTableHeader}>
+                <span className={styles.tradeTableTitle}>거래 내역</span>
+                <span className={styles.tradeTableCount}>{results.tradeLog.length}건</span>
+              </div>
+              <table className={styles.tradeTable}>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>매수일</th>
+                    <th>매수가</th>
+                    <th>매도일</th>
+                    <th>매도가</th>
+                    <th>청산 이유</th>
+                    <th>보유</th>
+                    <th>손익</th>
+                    <th>거래 수익률</th>
+                    <th>누적 수익률</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {results.tradeLog.map((t, i) => {
+                    const entryDate  = priceData[t.entryIdx]?.time ?? '-'
+                    const exitDate   = priceData[t.exitIdx]?.time  ?? '-'
+                    const holdDays   = t.exitIdx - t.entryIdx
+                    const retPct     = ((t.exitPrice - t.entryPrice) / t.entryPrice * 100).toFixed(2)
+                    const equityAtExit = results.curve[t.exitIdx + 1]?.equity ?? results.curve[results.curve.length - 1].equity
+                    const cumRetPct  = ((equityAtExit - capital) / capital * 100).toFixed(2)
+                    const reasonMap = {
+                      stopLoss:   { label: '손절', color: '#3b82f6', bg: '#eff6ff' },
+                      takeProfit: { label: '익절', color: '#dc2626', bg: '#fef2f2' },
+                      maxHold:    { label: '기간 만료', color: '#d97706', bg: '#fffbeb' },
+                      signal:     { label: '신호 매도', color: '#6b7280', bg: '#f3f4f6' },
+                      endOfData:  { label: '종료', color: '#9ca3af', bg: '#f9fafb' },
+                    }
+                    const reason = reasonMap[t.reason] ?? { label: t.reason, color: '#aaa', bg: '#f9fafb' }
+                    return (
+                      <tr key={i}>
+                        <td style={{ color: '#ccc', fontWeight: 600 }}>{i + 1}</td>
+                        <td style={{ color: '#888' }}>{entryDate}</td>
+                        <td style={{ fontWeight: 600 }}>${t.entryPrice.toFixed(2)}</td>
+                        <td style={{ color: '#888' }}>{exitDate}</td>
+                        <td style={{ fontWeight: 600 }}>${t.exitPrice.toFixed(2)}</td>
+                        <td>
+                          <span style={{
+                            color: reason.color, background: reason.bg,
+                            padding: '2px 8px', borderRadius: 20,
+                            fontSize: 11, fontWeight: 700,
+                          }}>{reason.label}</span>
+                        </td>
+                        <td style={{ color: '#888' }}>{holdDays}일</td>
+                        <td style={{ fontWeight: 700, color: t.pnl >= 0 ? '#dc2626' : '#3b82f6' }}>
+                          {t.pnl >= 0 ? '+' : ''}${t.pnl.toFixed(2)}
+                        </td>
+                        <td style={{ fontWeight: 600, color: t.pnl >= 0 ? '#dc2626' : '#3b82f6' }}>
+                          {retPct >= 0 ? '+' : ''}{retPct}%
+                        </td>
+                        <td style={{ fontWeight: 700, color: cumRetPct >= 0 ? '#dc2626' : '#3b82f6' }}>
+                          {cumRetPct >= 0 ? '+' : ''}{cumRetPct}%
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
         </div>

@@ -11,8 +11,8 @@ import styles from './Trading.module.css'
 function Trading() {
   const [liveStocks, setLiveStocks] = useState(stocks)
   const [selected, setSelected] = useState(stocks[0])
-  const [orderPrice, setOrderPrice] = useState(selected.price)
-  const { balance, portfolio, tradeHistory, buy, sell } = usePortfolio()
+  const [orderPrice, setOrderPrice] = useState(null)
+  const { balance, portfolio, tradeHistory, buy, sell, updateLivePrice } = usePortfolio()
 
   function handlePriceUpdate(stockId, price, change, changePct) {
     setLiveStocks(prev => prev.map(s =>
@@ -21,11 +21,12 @@ function Trading() {
     setSelected(prev =>
       prev.id === stockId ? { ...prev, price, change, changePct } : prev
     )
+    updateLivePrice(stockId, price)
   }
 
   function handleSelect(stock) {
     setSelected(stock)
-    setOrderPrice(stock.price)
+    setOrderPrice(null)
   }
 
   function handleOrder(type, qty) {

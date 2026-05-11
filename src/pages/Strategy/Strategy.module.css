@@ -892,8 +892,8 @@
   gap: 8px;
 }
 
-.metricUp  { background: #f0fdf4; border-color: #bbf7d0; }
-.metricDown { background: #fef2f2; border-color: #fecaca; }
+.metricUp  { background: #fef2f2; border-color: #fecaca; }
+.metricDown { background: #eff6ff; border-color: #bfdbfe; }
 
 .metricLbl {
   font-size: 11px;
@@ -908,8 +908,8 @@
   color: #1a1a2e;
 }
 
-.metricUp  .metricVal { color: #16a34a; }
-.metricDown .metricVal { color: #dc2626; }
+.metricUp  .metricVal { color: #dc2626; }
+.metricDown .metricVal { color: #3b82f6; }
 
 .chartWrap {
   background: #faf8f5;
@@ -1222,6 +1222,71 @@
   font-size: 11px;
   font-weight: 700;
   vertical-align: middle;
+}
+
+/* Trade log table */
+.tradeTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.tradeTable thead tr {
+  border-bottom: 1px solid #e8e4de;
+}
+
+.tradeTable th {
+  padding: 10px 14px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.tradeTable td {
+  padding: 10px 14px;
+  color: #444;
+  border-bottom: 1px solid #f5f2ed;
+  white-space: nowrap;
+}
+
+.tradeTable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.tradeTable tbody tr:hover td {
+  background: #faf8f5;
+}
+
+.tradeTableWrap {
+  background: #fff;
+  border: 1px solid #e8e4de;
+  border-radius: 14px;
+  overflow: hidden;
+  margin-top: 24px;
+}
+
+.tradeTableHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 14px;
+  border-bottom: 1px solid #f0ede8;
+}
+
+.tradeTableTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.tradeTableCount {
+  font-size: 12px;
+  color: #aaa;
+  font-weight: 400;
 }
 
 /* Responsive */

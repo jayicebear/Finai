@@ -1,16 +1,14 @@
 import { usePortfolio } from '../../context/PortfolioContext'
-import { stocks } from '../../data/stocks'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import styles from './Portfolio.module.css'
 
 const COLORS = ['#1a1a2e', '#4a4a7a', '#7a4a9a', '#16a34a', '#2563eb', '#d97706', '#dc2626', '#0891b2']
 
 function Portfolio() {
-  const { balance, portfolio } = usePortfolio()
+  const { balance, portfolio, livePrices } = usePortfolio()
 
   const holdings = Object.entries(portfolio).map(([id, data]) => {
-    const liveStock = stocks.find(s => s.id === id)
-    const currentPrice = liveStock?.price || data.avgPrice
+    const currentPrice = livePrices[id] || data.avgPrice
     const currentValue = currentPrice * data.qty
     const invested = data.avgPrice * data.qty
     const pnl = currentValue - invested

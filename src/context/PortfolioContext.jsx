@@ -1,4 +1,5 @@
 import { createContext, useContext, useState } from 'react'
+import { stocks } from '../data/stocks'
 
 const PortfolioContext = createContext(null)
 
@@ -6,6 +7,13 @@ export function PortfolioProvider({ children }) {
   const [balance, setBalance] = useState(100000)
   const [portfolio, setPortfolio] = useState({})
   const [tradeHistory, setTradeHistory] = useState([])
+  const [livePrices, setLivePrices] = useState(
+    Object.fromEntries(stocks.map(s => [s.id, s.price]))
+  )
+
+  function updateLivePrice(stockId, price) {
+    setLivePrices(prev => ({ ...prev, [stockId]: price }))
+  }
 
   function logTrade(type, stock, qty, source = 'manual', modelName = null) {
     setTradeHistory(prev => [{
@@ -58,7 +66,7 @@ export function PortfolioProvider({ children }) {
   }
 
   return (
-    <PortfolioContext.Provider value={{ balance, portfolio, tradeHistory, buy, sell }}>
+    <PortfolioContext.Provider value={{ balance, portfolio, tradeHistory, buy, sell, livePrices, updateLivePrice }}>
       {children}
     </PortfolioContext.Provider>
   )
