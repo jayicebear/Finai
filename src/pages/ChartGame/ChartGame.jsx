@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { createChart, CandlestickSeries, LineSeries, HistogramSeries, CrosshairMode } from 'lightweight-charts'
+import { createChart, CandlestickSeries, LineSeries, HistogramSeries, CrosshairMode, createSeriesMarkers } from 'lightweight-charts'
 import { stocks } from '../../data/stocks'
 import styles from './ChartGame.module.css'
 
@@ -24,6 +24,13 @@ const MA_LIST = [
   { n: 20,  color: '#f97316' },
   { n: 60,  color: '#3b82f6' },
   { n: 120, color: '#a855f7' },
+]
+
+const LEVERAGE_OPTIONS = [
+  { label: '1x', value: 1,  sub: '레버리지 없음' },
+  { label: '2x', value: 2,  sub: '2배' },
+  { label: '5x', value: 5,  sub: '5배' },
+  { label: '10x', value: 10, sub: '고위험' },
 ]
 
 const PCT_STEPS = [
@@ -198,6 +205,9 @@ export default function ChartGame() {
   const [qty, setQty] = useState(1)
   const [activeMAs, setActiveMAs] = useState([5, 20])
   const [activeOverlays, setActiveOverlays] = useState([])
+  const [leverage, setLeverage] = useState(1)
+  const [totalBorrowed, setTotalBorrowed] = useState(0)
+  const [marginCalled, setMarginCalled] = useState(false)
 
   const chartContainerRef = useRef(null)
   const chartRef = useRef(null)
@@ -205,17 +215,19 @@ export default function ChartGame() {
   const volSeriesRef = useRef(null)
   const maSeriesRefs = useRef({})
   const overlayRefs = useRef({})
+  const avgPriceLineRef = useRef(null)
+  const seriesMarkersRef = useRef(null)
 
   const visibleCount = HISTORY_CANDLES + turn
   const currentCandle = allData[visibleCount - 1] ?? null
   const currentPrice = currentCandle?.close ?? 0
   const stockValue = shares * currentPrice
-  const totalAsset = balance + stockValue
+  const totalAsset = balance + stockValue - totalBorrowed
   const returnPct = initialBalance > 0 ? ((totalAsset - initialBalance) / initialBalance) * 100 : 0
-  const holdingPct = shares > 0 && avgPrice > 0 ? ((currentPrice - avgPrice) / avgPrice) * 100 : null
+  const holdingPct = shares > 0 && avgPrice > 0 ? ((currentPrice - avgPrice) / avgPrice) * leverage * 100 : null
 
   const isBuy = orderMode === 'buy'
-  const maxBuy = currentPrice > 0 ? Math.floor(balance / currentPrice) : 0
+  const maxBuy = currentPrice > 0 ? Math.floor((balance * leverage) / currentPrice) : 0
   const maxSell = shares
   const maxQty = isBuy ? maxBuy : maxSell
   const safeQty = Math.min(qty, Math.max(1, maxQty))
@@ -241,6 +253,7 @@ export default function ChartGame() {
       wickUpColor: '#dc2626', wickDownColor: '#3b82f6',
     })
     candleSeriesRef.current = candle
+    seriesMarkersRef.current = createSeriesMarkers(candle, [])
     chart.priceScale('right').applyOptions({ scaleMargins: { top: 0.05, bottom: 0.25 } })
 
     const vol = chart.addSeries(HistogramSeries, {
@@ -275,6 +288,8 @@ export default function ChartGame() {
       overlayRefs.current = {}
       candleSeriesRef.current = null
       volSeriesRef.current = null
+      seriesMarkersRef.current = null
+      avgPriceLineRef.current = null
     }
   }, [phase])
 
@@ -356,6 +371,47 @@ export default function ChartGame() {
     })
   }, [activeMAs])
 
+  // 매수/매도 마커 (턴당 마지막 거래 하나만)
+  useEffect(() => {
+    if (!seriesMarkersRef.current || !allData.length) return
+    const byTurn = new Map()
+    trades.forEach(t => byTurn.set(t.turn, t))
+    const markers = [...byTurn.values()]
+      .map(t => {
+        const candle = allData[HISTORY_CANDLES + t.turn - 1]
+        if (!candle) return null
+        return {
+          time: candle.time,
+          position: t.type === 'buy' ? 'belowBar' : 'aboveBar',
+          color: t.type === 'buy' ? '#dc2626' : '#3b82f6',
+          shape: t.type === 'buy' ? 'arrowUp' : 'arrowDown',
+          text: t.type === 'buy' ? 'B' : 'S',
+        }
+      })
+      .filter(Boolean)
+      .sort((a, b) => a.time.localeCompare(b.time))
+    seriesMarkersRef.current.setMarkers(markers)
+  }, [allData, trades])
+
+  // 평균 매수가 라인
+  useEffect(() => {
+    if (!candleSeriesRef.current) return
+    if (avgPriceLineRef.current) {
+      try { candleSeriesRef.current.removePriceLine(avgPriceLineRef.current) } catch {}
+      avgPriceLineRef.current = null
+    }
+    if (avgPrice > 0 && shares > 0) {
+      avgPriceLineRef.current = candleSeriesRef.current.createPriceLine({
+        price: avgPrice,
+        color: '#bbbbbb',
+        lineWidth: 1,
+        lineStyle: 2,
+        axisLabelVisible: false,
+        title: '',
+      })
+    }
+  }, [avgPrice, shares])
+
   useEffect(() => {
     ;['bbUpper', 'bbMid', 'bbLower'].forEach(k =>
       overlayRefs.current[k]?.applyOptions({ visible: activeOverlays.includes('bb') })
@@ -394,35 +450,60 @@ export default function ChartGame() {
     setTrades([])
     setQty(1)
     setOrderMode('buy')
+    setTotalBorrowed(0)
+    setMarginCalled(false)
     setPhase('playing')
   }
 
   function nextTurn() {
     if (turn >= totalTurns) { setPhase('result'); return }
+    if (leverage > 1 && shares > 0 && totalAsset <= initialBalance * 0.05) {
+      forceLiquidate()
+      return
+    }
     setTurn(t => t + 1)
     setQty(1)
   }
 
-  function handleOrder(forcedMode) {
+  function handleOrder(forcedMode, forcedQty) {
     const mode = forcedMode ?? orderMode
+    const qty_ = forcedQty ?? safeQty
     if (mode === 'buy') {
-      if (safeQty <= 0 || balance < currentPrice) return
-      const cost = safeQty * currentPrice
-      setAvgPrice(prev => (prev * shares + cost) / (shares + safeQty))
-      setShares(s => s + safeQty)
-      setBalance(b => b - cost)
-      setTrades(t => [...t, { turn, type: 'buy', qty: safeQty, price: currentPrice }])
+      const margin = (currentPrice * qty_) / leverage
+      if (qty_ <= 0 || balance < margin) return
+      const borrowed = currentPrice * qty_ * (leverage - 1) / leverage
+      setAvgPrice(prev => (prev * shares + currentPrice * qty_) / (shares + qty_))
+      setShares(s => s + qty_)
+      setBalance(b => parseFloat((b - margin).toFixed(2)))
+      setTotalBorrowed(b => parseFloat((b + borrowed).toFixed(2)))
+      setTrades(t => [...t, { turn, type: 'buy', qty: qty_, price: currentPrice }])
     } else {
-      if (safeQty <= 0 || shares <= 0) return
-      setBalance(b => b + safeQty * currentPrice)
+      if (qty_ <= 0 || shares <= 0) return
+      const repayRatio = qty_ / shares
+      const repay = parseFloat((totalBorrowed * repayRatio).toFixed(2))
+      const proceeds = parseFloat((currentPrice * qty_ - repay).toFixed(2))
+      setBalance(b => parseFloat((b + proceeds).toFixed(2)))
+      setTotalBorrowed(b => parseFloat((b - repay).toFixed(2)))
       setShares(s => {
-        const next = s - safeQty
-        if (next === 0) setAvgPrice(0)
+        const next = s - qty_
+        if (next === 0) { setAvgPrice(0); setTotalBorrowed(0) }
         return next
       })
-      setTrades(t => [...t, { turn, type: 'sell', qty: safeQty, price: currentPrice }])
+      setTrades(t => [...t, { turn, type: 'sell', qty: qty_, price: currentPrice }])
     }
     setQty(1)
+  }
+
+  function forceLiquidate() {
+    if (shares <= 0) return
+    const repay = totalBorrowed
+    const proceeds = parseFloat((currentPrice * shares - repay).toFixed(2))
+    setBalance(b => parseFloat((b + Math.max(0, proceeds)).toFixed(2)))
+    setTotalBorrowed(0)
+    setShares(0)
+    setAvgPrice(0)
+    setTrades(t => [...t, { turn, type: 'sell', qty: shares, price: currentPrice }])
+    setMarginCalled(true)
   }
 
   function toggleMA(n) {
@@ -448,33 +529,64 @@ export default function ChartGame() {
       {/* ── Setup ── */}
       {phase === 'setup' && (
         <div className={styles.setupPage}>
-          <h1 className={styles.setupTitle}>차트 게임</h1>
-          <p className={styles.setupDesc}>50턴 동안 차트를 보며 매매해보세요.<br />종목은 게임 종료 후 공개됩니다.</p>
-          <div className={styles.setupSection}>
-            <label className={styles.setupLabel}>턴 수 선택</label>
-            <div className={styles.balanceGrid}>
-              {TURN_OPTIONS.map(({ label, value }) => (
-                <button
-                  key={value}
-                  className={`${styles.balanceBtn} ${totalTurns === value ? styles.balanceBtnActive : ''}`}
-                  onClick={() => setTotalTurns(value)}
-                >{label}</button>
-              ))}
+          <div className={styles.setupCard}>
+            <div className={styles.setupTitleArea}>
+              <h1 className={styles.setupTitle}>Chart Game</h1>
+              <p className={styles.setupDesc}>차트를 보며 매매하고 수익률을 겨뤄보세요.<br />종목은 게임 종료 후 공개됩니다.</p>
             </div>
-          </div>
-          <div className={styles.setupSection}>
-            <label className={styles.setupLabel}>초기 자산 선택</label>
-            <div className={styles.balanceGrid}>
-              {INITIAL_BALANCES.map(({ label, value }) => (
-                <button
-                  key={value}
-                  className={`${styles.balanceBtn} ${initialBalance === value ? styles.balanceBtnActive : ''}`}
-                  onClick={() => setInitialBalance(value)}
-                >{label}</button>
-              ))}
+
+            <div className={styles.setupDivider} />
+
+            <div className={styles.setupSection}>
+              <label className={styles.setupLabel}>턴 수</label>
+              <div className={styles.optionGrid}>
+                {TURN_OPTIONS.map(({ label, value }) => (
+                  <button
+                    key={value}
+                    className={`${styles.optionBtn} ${totalTurns === value ? styles.optionBtnActive : ''}`}
+                    onClick={() => setTotalTurns(value)}
+                  >
+                    <span className={styles.optionMain}>{label}</span>
+                    <span className={styles.optionSub}>{value === 30 ? '빠른 게임' : value === 50 ? '기본' : value === 100 ? '심화' : '고급'}</span>
+                  </button>
+                ))}
+              </div>
             </div>
+
+            <div className={styles.setupSection}>
+              <label className={styles.setupLabel}>초기 자산</label>
+              <div className={styles.optionGrid}>
+                {INITIAL_BALANCES.map(({ label, value }) => (
+                  <button
+                    key={value}
+                    className={`${styles.optionBtn} ${initialBalance === value ? styles.optionBtnActive : ''}`}
+                    onClick={() => setInitialBalance(value)}
+                  >
+                    <span className={styles.optionMain}>{label}</span>
+                    <span className={styles.optionSub}>{value === 1_000_000 ? '입문' : value === 5_000_000 ? '기본' : value === 10_000_000 ? '심화' : '고급'}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className={styles.setupSection}>
+              <label className={styles.setupLabel}>레버리지</label>
+              <div className={styles.optionGrid}>
+                {LEVERAGE_OPTIONS.map(({ label, value, sub }) => (
+                  <button
+                    key={value}
+                    className={`${styles.optionBtn} ${leverage === value ? styles.optionBtnActive : ''}`}
+                    onClick={() => setLeverage(value)}
+                  >
+                    <span className={styles.optionMain}>{label}</span>
+                    <span className={styles.optionSub}>{sub}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button className={styles.startBtn} onClick={startGame}>게임 시작</button>
           </div>
-          <button className={styles.startBtn} onClick={startGame}>게임 시작</button>
         </div>
       )}
 
@@ -673,8 +785,14 @@ export default function ChartGame() {
           <div className={styles.statusBox}>
             <div className={styles.statusHeader}>
               <span>게임현황</span>
-              <span className={styles.initLabel}>초기 {initialBalance.toLocaleString()}원</span>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                {leverage > 1 && <span className={styles.leverageBadge}>{leverage}x</span>}
+                <span className={styles.initLabel}>초기 {initialBalance.toLocaleString()}원</span>
+              </div>
             </div>
+            {marginCalled && (
+              <div className={styles.marginCallBanner}>마진콜 — 강제 청산됨</div>
+            )}
 
             <div className={styles.assetRow}>
               <span className={styles.assetLabel}>총 평가자산</span>

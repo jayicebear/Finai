@@ -7,6 +7,9 @@ export function PortfolioProvider({ children }) {
   const [balance, setBalance] = useState(100000)
   const [portfolio, setPortfolio] = useState({})
   const [tradeHistory, setTradeHistory] = useState([])
+  const [credits, setCredits] = useState(2000)
+  const [purchasedStrategies, setPurchasedStrategies] = useState([])
+
   const [livePrices, setLivePrices] = useState(
     Object.fromEntries(stocks.map(s => [s.id, s.price]))
   )
@@ -47,6 +50,13 @@ export function PortfolioProvider({ children }) {
     return true
   }
 
+  function purchaseStrategy(strategy, investorId) {
+    if (credits < strategy.price) return false
+    setCredits(prev => prev - strategy.price)
+    setPurchasedStrategies(prev => [...prev, { ...strategy, investorId, purchasedAt: new Date() }])
+    return true
+  }
+
   function sell(stock, qty, source = 'manual', modelName = null) {
     const held = portfolio[stock.id]?.qty || 0
     if (qty > held) return false
@@ -66,7 +76,7 @@ export function PortfolioProvider({ children }) {
   }
 
   return (
-    <PortfolioContext.Provider value={{ balance, portfolio, tradeHistory, buy, sell, livePrices, updateLivePrice }}>
+    <PortfolioContext.Provider value={{ balance, portfolio, tradeHistory, buy, sell, livePrices, updateLivePrice, credits, purchasedStrategies, purchaseStrategy }}>
       {children}
     </PortfolioContext.Provider>
   )

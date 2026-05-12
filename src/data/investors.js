@@ -20,6 +20,10 @@ export const INVESTORS = [
       { id: 'META', name: 'Meta',      weight: 14, return: +28.9 },
     ],
     bio: 'GPT-4o 기반 모멘텀 전략. 거래량 급증 + RSI 돌파 조합으로 단기 추세 추종.',
+    strategies: [
+      { id: 101, name: '모멘텀 단타 v1', price: 300, buyers: 58, description: 'RSI 돌파 + 거래량 급증 조합 단기 전략. 평균 보유 2일.' },
+      { id: 102, name: 'GPT 신호 필터', price: 500, buyers: 31, description: 'GPT-4o가 선별한 고확률 진입 신호만 필터링. 승률 65% 이상.' },
+    ],
   },
   {
     id: 2,
@@ -41,6 +45,10 @@ export const INVESTORS = [
       { id: 'AMZN', name: 'Amazon',   weight: 25, return: +61.4 },
     ],
     bio: '직접 펀더멘털 분석. P/E·FCF 기반 저평가 우량주 장기 보유 전략.',
+    strategies: [
+      { id: 201, name: '가치주 장기 보유', price: 800, buyers: 124, description: 'P/E·FCF 기반 저평가 우량주 선별. 3개월 이상 장기 보유 전략.' },
+      { id: 202, name: '배당 성장 포트폴리오', price: 600, buyers: 89, description: '배당 성장률 상위 종목 집중 투자. 안정적 수익 추구.' },
+    ],
   },
   {
     id: 3,
@@ -63,6 +71,9 @@ export const INVESTORS = [
       { id: 'NFLX', name: 'Netflix',  weight: 20, return: -8.4  },
     ],
     bio: 'Claude 앙상블 전략. 여러 신호를 조합해 리스크 최소화하며 꾸준한 수익 추구.',
+    strategies: [
+      { id: 301, name: '앙상블 중기 전략', price: 400, buyers: 47, description: 'MA·RSI·MACD 복합 신호 앙상블. 리스크 최소화 중기 전략.' },
+    ],
   },
   {
     id: 4,
@@ -84,6 +95,10 @@ export const INVESTORS = [
       { id: 'NVDA', name: 'NVIDIA',   weight: 20, return: +42.1 },
     ],
     bio: 'Grok 소셜 감성 분석. X·Reddit 트렌드 실시간 분석, 고빈도 단타 전략.',
+    strategies: [
+      { id: 401, name: '소셜 감성 스캘핑', price: 350, buyers: 73, description: 'X·Reddit 실시간 감성 분석 기반 초단기 매매. 당일 청산.' },
+      { id: 402, name: '트렌드 서핑', price: 250, buyers: 102, description: '소셜 트렌드 급등 종목 조기 진입 전략. 빠른 익절 원칙.' },
+    ],
   },
   {
     id: 5,
@@ -105,6 +120,9 @@ export const INVESTORS = [
       { id: 'AAPL', name: 'Apple',    weight: 30, return: +12.5 },
     ],
     bio: '직접 차트 분석. Bollinger Band + RSI 과매도 구간 매수, 평균 회귀 전략.',
+    strategies: [
+      { id: 501, name: '볼린저 평균회귀', price: 450, buyers: 66, description: 'Bollinger Band 하단 + RSI 과매도 조합 매수. 평균 회귀 단기 전략.' },
+    ],
   },
   {
     id: 6,
@@ -127,6 +145,10 @@ export const INVESTORS = [
       { id: 'AAPL', name: 'Apple',     weight: 20, return: +12.5 },
     ],
     bio: 'Gemini 퀀트 팩터 전략. 모멘텀·밸류·퀄리티 팩터 멀티 스코어링 시스템.',
+    strategies: [
+      { id: 601, name: '퀀트 팩터 멀티전략', price: 700, buyers: 95, description: '모멘텀·밸류·퀄리티 팩터 복합 스코어링. 중기 포트폴리오 전략.' },
+      { id: 602, name: '팩터 로테이션', price: 550, buyers: 52, description: '시장 국면에 따라 팩터 비중 자동 조절. 리스크 대비 수익 최적화.' },
+    ],
   },
 ]
 

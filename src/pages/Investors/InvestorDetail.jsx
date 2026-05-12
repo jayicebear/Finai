@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts'
 import { MODEL_COLORS } from '../../data/investors'
+import { usePortfolio } from '../../context/PortfolioContext'
 import styles from './InvestorDetail.module.css'
 
 const HOLDING_COLORS = ['#1a1a2e', '#4a4a7a', '#16a34a', '#2563eb', '#d97706', '#dc2626']
@@ -18,6 +20,15 @@ export default function InvestorDetail({ investor: inv, onClose }) {
   const isAI       = inv.tradingStyle === 'ai'
   const modelColor = isAI ? MODEL_COLORS[inv.aiModel] : '#2563eb'
   const radar      = radarData(inv)
+  const { credits, purchasedStrategies, purchaseStrategy } = usePortfolio()
+  const [confirmStrategy, setConfirmStrategy] = useState(null)
+
+  function handleBuy(strategy) {
+    const ok = purchaseStrategy(strategy, inv.id)
+    if (ok) setConfirmStrategy(null)
+  }
+
+  const purchasedIds = new Set(purchasedStrategies.map(s => s.id))
 
   return (
     <div className={styles.panel}>
@@ -139,6 +150,63 @@ export default function InvestorDetail({ investor: inv, onClose }) {
           </li>
         ))}
       </ul>
+
+      {/* 전략 마켓 */}
+      {inv.strategies?.length > 0 && (
+        <>
+          <div className={styles.divider} />
+          <div className={styles.strategyHeader}>
+            <h4 className={styles.sectionTitle}>판매 전략</h4>
+            <span className={styles.creditBadge}>보유 크레딧 {credits.toLocaleString()}C</span>
+          </div>
+          <div className={styles.strategyList}>
+            {inv.strategies.map(strategy => {
+              const owned = purchasedIds.has(strategy.id)
+              return (
+                <div key={strategy.id} className={styles.strategyCard}>
+                  <div className={styles.strategyInfo}>
+                    <span className={styles.strategyName}>{strategy.name}</span>
+                    <span className={styles.strategyDesc}>{strategy.description}</span>
+                    <span className={styles.strategyBuyers}>구매 {strategy.buyers}명</span>
+                  </div>
+                  {owned ? (
+                    <span className={styles.ownedBadge}>보유중</span>
+                  ) : (
+                    <button
+                      className={styles.buyBtn}
+                      style={{ opacity: credits < strategy.price ? 0.4 : 1 }}
+                      disabled={credits < strategy.price}
+                      onClick={() => setConfirmStrategy(strategy)}
+                    >
+                      {strategy.price}C
+                    </button>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </>
+      )}
+
+      {/* 구매 확인 모달 */}
+      {confirmStrategy && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <h3 className={styles.modalTitle}>전략 구매</h3>
+            <p className={styles.modalDesc}>
+              <strong>{confirmStrategy.name}</strong> 전략을<br />
+              {confirmStrategy.price.toLocaleString()}C에 구매하시겠습니까?
+            </p>
+            <p className={styles.modalCredits}>
+              구매 후 잔여 크레딧: {(credits - confirmStrategy.price).toLocaleString()}C
+            </p>
+            <div className={styles.modalBtns}>
+              <button className={styles.modalCancel} onClick={() => setConfirmStrategy(null)}>취소</button>
+              <button className={styles.modalConfirm} onClick={() => handleBuy(confirmStrategy)}>구매하기</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

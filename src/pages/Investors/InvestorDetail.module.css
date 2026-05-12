@@ -236,3 +236,170 @@
 
 .up   { color: #dc2626; }
 .down { color: #3b82f6; }
+
+.strategyHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.creditBadge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #d97706;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  padding: 3px 10px;
+  border-radius: 10px;
+  font-family: system-ui, sans-serif;
+}
+
+.strategyList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.strategyCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #faf8f5;
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.strategyInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+}
+
+.strategyName {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1a2e;
+  font-family: system-ui, sans-serif;
+}
+
+.strategyDesc {
+  font-size: 11px;
+  color: #888;
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+.strategyBuyers {
+  font-size: 10px;
+  color: #bbb;
+  font-family: system-ui, sans-serif;
+}
+
+.buyBtn {
+  flex-shrink: 0;
+  background: #1a1a2e;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.buyBtn:hover:not(:disabled) { background: #2d2d4e; }
+
+.ownedBadge {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: #16a34a;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-family: system-ui, sans-serif;
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px 24px;
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+}
+
+.modalTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a2e;
+  font-family: system-ui, sans-serif;
+}
+
+.modalDesc {
+  font-size: 13px;
+  color: #555;
+  font-family: system-ui, sans-serif;
+  line-height: 1.7;
+}
+
+.modalCredits {
+  font-size: 12px;
+  color: #d97706;
+  font-weight: 600;
+  font-family: system-ui, sans-serif;
+}
+
+.modalBtns {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.modalCancel {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  color: #888;
+  cursor: pointer;
+  font-family: system-ui, sans-serif;
+}
+
+.modalCancel:hover { background: #f5f5f5; }
+
+.modalConfirm {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  background: #1a1a2e;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  font-family: system-ui, sans-serif;
+}
+
+.modalConfirm:hover { background: #2d2d4e; }
