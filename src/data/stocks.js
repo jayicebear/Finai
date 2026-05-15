@@ -1,20 +1,28 @@
 export const stocks = [
   { id: 'AAPL', name: 'Apple Inc.',     price: 189.45, change: +1.23,  changePct: +0.65,
-    phases: [{ w:0.3, drift:0.468, vol:1.0 }, { w:0.4, drift:0.462, vol:0.9 }, { w:0.3, drift:0.472, vol:1.1 }] },
+    // 안정적 우상향 → 횡보 → 재상승
+    phases: [{ w:0.35, drift:0.45, vol:0.8 }, { w:0.35, drift:0.50, vol:0.7 }, { w:0.30, drift:0.44, vol:0.9 }] },
   { id: 'TSLA', name: 'Tesla Inc.',     price: 248.32, change: -3.11,  changePct: -1.24,
-    phases: [{ w:0.2, drift:0.455, vol:2.2 }, { w:0.3, drift:0.515, vol:2.5 }, { w:0.3, drift:0.460, vol:2.0 }, { w:0.2, drift:0.492, vol:1.8 }] },
+    // 급등 → 급락 → 고변동 횡보 → 반등
+    phases: [{ w:0.20, drift:0.41, vol:2.5 }, { w:0.25, drift:0.60, vol:2.8 }, { w:0.30, drift:0.50, vol:2.2 }, { w:0.25, drift:0.44, vol:2.0 }] },
   { id: 'NVDA', name: 'NVIDIA Corp.',   price: 875.20, change: +12.40, changePct: +1.44,
-    phases: [{ w:0.3, drift:0.474, vol:1.2 }, { w:0.4, drift:0.448, vol:1.5 }, { w:0.3, drift:0.505, vol:1.8 }] },
+    // 강한 상승 → 조정 → 더 강한 상승
+    phases: [{ w:0.30, drift:0.42, vol:1.3 }, { w:0.30, drift:0.53, vol:1.0 }, { w:0.40, drift:0.40, vol:1.6 }] },
   { id: 'MSFT', name: 'Microsoft',      price: 415.60, change: +2.05,  changePct: +0.50,
-    phases: [{ w:0.5, drift:0.463, vol:0.8 }, { w:0.3, drift:0.472, vol:1.0 }, { w:0.2, drift:0.460, vol:0.9 }] },
+    // 완만한 우상향 (낮은 변동성)
+    phases: [{ w:0.40, drift:0.46, vol:0.7 }, { w:0.35, drift:0.48, vol:0.8 }, { w:0.25, drift:0.45, vol:0.7 }] },
   { id: 'AMZN', name: 'Amazon',         price: 182.30, change: -0.75,  changePct: -0.41,
-    phases: [{ w:0.25, drift:0.471, vol:1.1 }, { w:0.35, drift:0.498, vol:1.3 }, { w:0.4, drift:0.460, vol:1.0 }] },
+    // 하락 → 긴 횡보 → 돌파 상승
+    phases: [{ w:0.25, drift:0.55, vol:1.1 }, { w:0.35, drift:0.50, vol:0.8 }, { w:0.40, drift:0.43, vol:1.3 }] },
   { id: 'GOOGL', name: 'Alphabet',      price: 172.88, change: +1.10,  changePct: +0.64,
-    phases: [{ w:0.4, drift:0.467, vol:1.0 }, { w:0.3, drift:0.482, vol:1.2 }, { w:0.3, drift:0.464, vol:0.9 }] },
+    // 완만한 상승 → 조정 → 횡보
+    phases: [{ w:0.40, drift:0.46, vol:0.9 }, { w:0.30, drift:0.53, vol:1.1 }, { w:0.30, drift:0.50, vol:0.8 }] },
   { id: 'META', name: 'Meta Platforms', price: 512.44, change: +5.32,  changePct: +1.05,
-    phases: [{ w:0.25, drift:0.458, vol:1.2 }, { w:0.3, drift:0.535, vol:2.0 }, { w:0.45, drift:0.448, vol:1.4 }] },
+    // 상승 → 폭락(불 트랩) → V자 회복
+    phases: [{ w:0.25, drift:0.43, vol:1.3 }, { w:0.25, drift:0.61, vol:2.3 }, { w:0.50, drift:0.43, vol:1.6 }] },
   { id: 'NFLX', name: 'Netflix',        price: 628.90, change: -8.20,  changePct: -1.29,
-    phases: [{ w:0.3, drift:0.460, vol:1.5 }, { w:0.4, drift:0.508, vol:1.8 }, { w:0.3, drift:0.476, vol:1.3 }] },
+    // 고변동 하락 → 반등 시도 → 재하락
+    phases: [{ w:0.35, drift:0.55, vol:1.7 }, { w:0.30, drift:0.46, vol:1.4 }, { w:0.35, drift:0.54, vol:1.9 }] },
 ]
 
 const MA_NS = [5, 20, 60, 120]

@@ -50,7 +50,7 @@ const STOCKS = [
 
 const STOCK_MAP = Object.fromEntries(STOCKS.map(s => [s.id, s]))
 
-/* ─── 섹터별 초기 위치 계산 (React Flow 때와 동일 방식) ──── */
+/* ─── 섹터별 초기 위치 계산 ──── */
 const SECTOR_ANGLES = {
   Technology:  -60,
   Finance:      0,
@@ -243,8 +243,8 @@ export default function Graph() {
   const [mode,         setMode]         = useState('sector')
   const [sectorFilter, setSectorFilter] = useState(null)
   const [minCorr,      setMinCorr]      = useState(0.55)
-  const [selected,     setSelected]     = useState(null) // { type: 'node'|'edge', data }
-  const [tooltip,      setTooltip]      = useState(null) // { x, y, edge }
+  const [selected,     setSelected]     = useState(null)
+  const [tooltip,      setTooltip]      = useState(null)
 
   const currentMode = MODES.find(m => m.id === mode)
 
@@ -415,7 +415,7 @@ export default function Graph() {
       graph.destroy()
       graphRef.current = null
     }
-  }, []) // 마운트 시 한 번만 — 캔버스·이벤트·플러그인 재생성 없음
+  }, [])
 
   /* 데이터 업데이트 — mode/filter/minCorr 변경 시 setData만 호출 */
   useEffect(() => {
