@@ -19,7 +19,7 @@ import ChartGame from './pages/ChartGame/ChartGame'
 
 function App() {
   return (
-    <BrowserRouter basename="/Finai">
+    <BrowserRouter>
       <PortfolioProvider>
         <StrategyProvider>
           <Navbar />
